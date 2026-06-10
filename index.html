@@ -81,7 +81,7 @@
     <div class="card-title"><span class="step-badge">3</span>Ảnh mặt tiền (tối đa 3 ảnh)</div>
     <div class="upload-area" onclick="document.getElementById('fileInput').click()">
       <div class="upload-icon">📸</div>
-      <div class="upload-text">Nhấn để chọn ảnh<br><strong>JPG · PNG · Tối đa 3 ảnh</strong></div>
+      <div class="upload-text">Nhấn để chọn ảnh<br><strong>JPG · PNG · Tối thiểu 1, tối đa 3 ảnh</strong><br><span style="font-size:0.85em;color:#888">Ảnh tự động nén về dưới 200KB</span></div>
     </div>
     <input type="file" id="fileInput" accept="image/*" multiple onchange="onFileSelect(event)">
     <div class="preview-grid" id="previewGrid"></div>
@@ -197,6 +197,7 @@ async function submitForm(){
   const alertEl=document.getElementById('submitAlert');
   if(!gdv||!qlkv||!ch){alertEl.innerHTML='<div class="alert alert-error">⚠️ Chọn đủ GĐV · QLKV · Cửa hàng!</div>';window.scrollTo({top:0,behavior:'smooth'});return;}
   if(!document.getElementById('kv1').value||!document.getElementById('kv2').value){alertEl.innerHTML='<div class="alert alert-error">⚠️ Điền đủ 2 khu vực bắt buộc!</div>';return;}
+  if(selectedFiles.length===0){alertEl.innerHTML='<div class="alert alert-error">⚠️ Vui lòng chụp ít nhất 1 ảnh mặt tiền!</div>';document.getElementById('fileInput').scrollIntoView({behavior:'smooth'});return;}
   const hasWarn=KV_LIST.some(kv=>{const v=parseFloat(document.getElementById(kv.id).value);return !isNaN(v)&&v>MAX_CM;});
   if(hasWarn&&!confirm('⚠️ Có khu vực > 400cm. Xác nhận gửi?'))return;
 
@@ -227,7 +228,38 @@ async function submitForm(){
   setTimeout(()=>{if(btn.disabled){document.getElementById('spinner').style.display='none';btn.disabled=false;alertEl.innerHTML='<div class="alert alert-success">✅ Đã gửi!</div>';try{document.body.removeChild(form);}catch(e){}resetForm();}},15000);
 }
 
-function toBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+// Resize ảnh về < 200KB
+function resizeImage(file, maxKB=200) {
+  return new Promise((res) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_BYTES = maxKB * 1024;
+        let quality = 0.85;
+        let scale = 1;
+        // Nếu file nhỏ hơn maxKB rồi thì dùng luôn
+        if (file.size <= MAX_BYTES) { res(ev.target.result.split(',')[1]); return; }
+        const canvas = document.createElement('canvas');
+        const tryCompress = () => {
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const bytes = Math.round((dataUrl.length - 22) * 3/4);
+          if (bytes <= MAX_BYTES || quality <= 0.3) { res(dataUrl.split(',')[1]); return; }
+          if (quality > 0.4) { quality -= 0.1; }
+          else { scale *= 0.85; quality = 0.6; }
+          tryCompress();
+        };
+        tryCompress();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function toBase64(file){ return resizeImage(file, 200); }
 function resetForm(){
   document.getElementById('selGDV').value='';
   document.getElementById('selQLKV').innerHTML='<option value="">— Chọn GĐV trước —</option>'; document.getElementById('selQLKV').disabled=true;
