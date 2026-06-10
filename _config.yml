@@ -1,0 +1,9 @@
+# GitHub Pages config
+# Disable Jekyll processing (pure static HTML)
+# This is needed so files starting with _ are served correctly
+# and .json files are accessible via fetch()
+
+include:
+  - "*.json"
+  - "forms/**"
+  - "engine/**"
