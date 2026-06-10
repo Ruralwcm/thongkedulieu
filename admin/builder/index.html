@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Builder — RuralForms</title>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <style>
+    .builder-layout { display:grid; grid-template-columns:280px 1fr; gap:20px; align-items:start; }
+    @media (max-width:768px) { .builder-layout { grid-template-columns:1fr; } }
+
+    /* Left palette */
+    .field-palette { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; position:sticky; top:80px; }
+    .palette-title { font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--gray-400); margin-bottom:10px; letter-spacing:0.05em; }
+    .palette-item {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:var(--radius-sm);
+      cursor:pointer; transition:background 0.15s; margin-bottom:6px;
+      font-size:0.9rem; font-weight:500; color:var(--gray-700);
+      border:1.5px solid var(--gray-200); background:white;
+      user-select:none;
+    }
+    .palette-item:hover { background:var(--primary-light); border-color:var(--primary-mid); color:var(--primary); }
+    .palette-item .pi-icon { font-size:1.1rem; width:28px; text-align:center; }
+
+    /* Builder canvas */
+    .builder-canvas { }
+    .canvas-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .fields-list { min-height:200px; }
+    .empty-drop-zone {
+      border:2px dashed var(--gray-200); border-radius:var(--radius);
+      padding:40px; text-align:center; color:var(--gray-400);
+      margin-bottom:12px; transition:border-color 0.2s, background 0.2s;
+    }
+    .empty-drop-zone.dragover { border-color:var(--primary-mid); background:var(--primary-light); }
+
+    /* Field item */
+    .field-item { user-select:none; }
+    .field-item-header { gap:6px; }
+    .fi-title { flex:1; }
+    .fi-label { font-weight:600; font-size:0.9rem; }
+    .fi-req { color:var(--danger); font-size:0.8rem; margin-left:4px; }
+
+    /* Config panel */
+    .field-config { background:var(--gray-50); border-radius:var(--radius-sm); }
+    .config-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .config-row.one { grid-template-columns:1fr; }
+    .config-label { font-size:0.82rem; font-weight:600; color:var(--gray-600); margin-bottom:4px; display:block; }
+
+    .config-input {
+      width:100%; padding:7px 10px; border:1.5px solid var(--gray-200);
+      border-radius:6px; font-size:0.88rem; min-height:36px;
+      font-family:var(--font); color:var(--gray-800);
+    }
+    .config-input:focus { outline:none; border-color:var(--primary-mid); }
+
+    /* Preview panel */
+    .preview-panel { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; }
+    .preview-title { font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--gray-400); margin-bottom:12px; letter-spacing:0.05em; }
+
+    /* JSON output */
+    .json-output {
+      background:var(--gray-800); color:#7dd3fc; padding:16px;
+      border-radius:var(--radius-sm); font-size:0.8rem; font-family:monospace;
+      white-space:pre; overflow:auto; max-height:400px; line-height:1.6;
+    }
+    .tab-nav { display:flex; border-bottom:2px solid var(--gray-200); margin-bottom:16px; }
+    .tab-btn {
+      padding:10px 20px; font-size:0.9rem; font-weight:600; cursor:pointer;
+      border:none; background:none; color:var(--gray-500); border-bottom:2px solid transparent;
+      margin-bottom:-2px; transition:color 0.2s;
+    }
+    .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+    .drag-over-indicator {
+      height:4px; background:var(--primary-mid); border-radius:2px;
+      margin:4px 0; opacity:0; transition:opacity 0.2s;
+    }
+    .drag-over-indicator.show { opacity:1; }
+
+    /* Options list (for dropdown) */
+    .options-list { margin-top:8px; }
+    .option-row { display:flex; gap:6px; margin-bottom:6px; align-items:center; }
+    .option-row input { flex:1; padding:6px 10px; border:1.5px solid var(--gray-200); border-radius:6px; font-size:0.85rem; min-height:32px; }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner" style="max-width:1200px;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="header-logo">🔧</div>
+      <div>
+        <h1>Form Builder</h1>
+        <p>Tạo và chỉnh sửa form kéo thả</p>
+      </div>
+    </div>
+    <nav class="admin-nav">
+      <a href="../">📊 Dashboard</a>
+      <a href="#" class="active">🔧 Builder</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container" style="max-width:1200px">
+
+  <!-- Form meta card -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="config-row" style="grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div>
+        <label class="config-label">Form ID <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="config-input" id="meta-id" placeholder="vd: mat-tien" oninput="refreshPreview()">
+      </div>
+      <div>
+        <label class="config-label">Tiêu đề form <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="config-input" id="meta-title" placeholder="Tên hiển thị" oninput="refreshPreview()">
+      </div>
+      <div>
+        <label class="config-label">Mô tả ngắn</label>
+        <input type="text" class="config-input" id="meta-subtitle" placeholder="Mô tả form" oninput="refreshPreview()">
+      </div>
+    </div>
+    <div class="config-row" style="grid-template-columns:1fr 100px;gap:12px;margin-top:10px">
+      <div>
+        <label class="config-label">Webhook URL (Google Apps Script)</label>
+        <input type="url" class="config-input" id="meta-webhook" placeholder="https://script.google.com/macros/s/..." oninput="refreshPreview()">
+      </div>
+      <div>
+        <label class="config-label">Trạng thái</label>
+        <select class="config-input" id="meta-enabled" onchange="refreshPreview()">
+          <option value="true">✅ Bật</option>
+          <option value="false">⏸️ Tắt</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="builder-layout">
+
+    <!-- Left: Field palette -->
+    <div class="field-palette">
+      <div class="palette-title">Loại trường dữ liệu</div>
+      <div id="field-palette">
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'text')" onclick="addField('text')">
+          <span class="pi-icon">📝</span> Text
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'textarea')" onclick="addField('textarea')">
+          <span class="pi-icon">📄</span> Textarea
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'number')" onclick="addField('number')">
+          <span class="pi-icon">🔢</span> Number
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'dropdown')" onclick="addField('dropdown')">
+          <span class="pi-icon">📋</span> Dropdown
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'image')" onclick="addField('image')">
+          <span class="pi-icon">📷</span> Ảnh/File
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'date')" onclick="addField('date')">
+          <span class="pi-icon">📅</span> Ngày
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'phone')" onclick="addField('phone')">
+          <span class="pi-icon">📱</span> SĐT Việt Nam
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'email')" onclick="addField('email')">
+          <span class="pi-icon">📧</span> Email
+        </div>
+        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'section')" onclick="addField('section')">
+          <span class="pi-icon">📌</span> Section / Tiêu đề
+        </div>
+      </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-200)">
+        <div class="palette-title">Thao tác</div>
+        <button class="btn btn-primary btn-block btn-sm mb-2" onclick="showJsonOutput()">
+          💾 Xuất JSON Config
+        </button>
+        <button class="btn btn-secondary btn-block btn-sm mb-2" onclick="loadSampleConfig()">
+          📥 Load mẫu mat-tien
+        </button>
+        <button class="btn btn-sm btn-block" style="background:#fee2e2;color:#991b1b" onclick="clearAll()">
+          🗑️ Xóa tất cả
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Builder canvas + Preview -->
+    <div class="builder-canvas">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('builder',this)">🔧 Builder</button>
+        <button class="tab-btn" onclick="switchTab('preview',this)">👁️ Preview</button>
+        <button class="tab-btn" onclick="switchTab('json',this)">📋 JSON</button>
+      </div>
+
+      <!-- Builder tab -->
+      <div id="tab-builder">
+        <div class="fields-list" id="fields-list"
+          ondragover="canvasDragOver(event)" ondrop="canvasDrop(event)" ondragleave="canvasDragLeave(event)">
+          <div class="empty-drop-zone" id="empty-zone">
+            <div style="font-size:2.5rem;margin-bottom:12px">🏗️</div>
+            <div style="font-weight:600;color:var(--gray-500)">Kéo thả hoặc click field type để thêm</div>
+            <div class="text-sm text-muted mt-1">Các fields sẽ hiển thị ở đây</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview tab -->
+      <div id="tab-preview" style="display:none">
+        <div class="preview-panel">
+          <div class="preview-title">Preview Form</div>
+          <div id="preview-container">
+            <p class="text-muted text-center" style="padding:32px">Thêm fields để xem preview</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON tab -->
+      <div id="tab-json" style="display:none">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3 style="font-size:1rem">JSON Config</h3>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" onclick="copyJson()">📋 Copy</button>
+              <button class="btn btn-primary btn-sm" onclick="downloadJson()">⬇️ Download</button>
+            </div>
+          </div>
+          <pre class="json-output" id="json-output">// Thêm fields và điền thông tin form để xem JSON</pre>
+          <div class="alert alert-info mt-3" style="font-size:0.83rem">
+            <strong>📝 Deploy lên GitHub Pages:</strong><br>
+            1. Copy JSON trên → paste vào file <code>forms/&lt;id&gt;/config.json</code><br>
+            2. Tạo <code>f/&lt;id&gt;/index.html</code> (copy từ <code>f/mat-tien/index.html</code>, sửa đường dẫn config)<br>
+            3. Thêm form vào <code>FORMS_REGISTRY</code> trong <code>admin/index.html</code><br>
+            4. Commit & push → GitHub Pages tự deploy
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── State ──
+  let fields = [];
+  let dragSrcType = null;   // type being dragged from palette
+  let dragSrcIdx = null;    // index being dragged from list
+  let dropTargetIdx = null;
+
+  const TYPE_DEFAULTS = {
+    text: { label:'Trường Text', required:false, placeholder:'', validate:{} },
+    textarea: { label:'Trường Textarea', required:false, placeholder:'', validate:{} },
+    number: { label:'Trường Number', required:false, unit:'', validate:{ min:'', max:'', warn_above:'' } },
+    dropdown: { label:'Dropdown', required:false, source:'', options:[] },
+    image: { label:'Ảnh/File', required:false, validate:{ min_files:1, max_files:3, max_kb:200, auto_resize:true } },
+    date: { label:'Ngày', required:false, validate:{ no_past:false, no_future:false } },
+    phone: { label:'Số điện thoại VN', required:false },
+    email: { label:'Email', required:false, validate:{} },
+    section: { label:'Tiêu đề phần' }
+  };
+
+  function genId(type) {
+    return type + '_' + Date.now().toString(36);
+  }
+
+  // ── Add field ──
+  function addField(type) {
+    const field = {
+      id: genId(type),
+      type,
+      ...JSON.parse(JSON.stringify(TYPE_DEFAULTS[type] || {}))
+    };
+    fields.push(field);
+    renderFields();
+    refreshPreview();
+    // Open config of newly added field
+    setTimeout(() => {
+      const cfg = document.getElementById(`fc-${field.id}`);
+      if (cfg) cfg.classList.add('open');
+    }, 50);
+  }
+
+  // ── Render fields list ──
+  function renderFields() {
+    const list = document.getElementById('fields-list');
+    const emptyZone = document.getElementById('empty-zone');
+    if (emptyZone) emptyZone.style.display = fields.length ? 'none' : 'block';
+
+    // Remove existing field items (keep empty zone)
+    list.querySelectorAll('.field-item, .drag-over-indicator').forEach(el => el.remove());
+
+    fields.forEach((field, idx) => {
+      const item = buildFieldItem(field, idx);
+      list.appendChild(item);
+    });
+  }
+
+  function buildFieldItem(field, idx) {
+    const div = document.createElement('div');
+    div.className = 'field-item card';
+    div.style.marginBottom = '10px';
+    div.draggable = true;
+    div.dataset.idx = idx;
+
+    div.addEventListener('dragstart', e => fieldDragStart(e, idx));
+    div.addEventListener('dragover', e => fieldDragOver(e, idx));
+    div.addEventListener('drop', e => fieldDrop(e, idx));
+    div.addEventListener('dragend', () => fieldDragEnd());
+
+    const isRequired = field.required;
+    const header = document.createElement('div');
+    header.className = 'field-item-header';
+    header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer';
+    header.innerHTML = `
+      <span style="cursor:grab;color:var(--gray-300);font-size:1.1rem;padding:4px" class="drag-handle">⠿</span>
+      <span class="field-item-type">${field.type}</span>
+      <div class="fi-title">
+        <span class="fi-label">${field.label || '(chưa có tên)'}</span>
+        ${isRequired ? '<span class="fi-req">*</span>' : ''}
+      </div>
+      <div style="display:flex;gap:4px">
+        <button onclick="toggleConfig('${field.id}')" class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.78rem">⚙️</button>
+        <button onclick="moveField(${idx}, -1)" class="btn btn-secondary btn-sm" title="Lên" style="min-height:28px;padding:4px 8px">↑</button>
+        <button onclick="moveField(${idx}, 1)" class="btn btn-secondary btn-sm" title="Xuống" style="min-height:28px;padding:4px 8px">↓</button>
+        <button onclick="removeField(${idx})" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;min-height:28px;padding:4px 8px">✕</button>
+      </div>
+    `;
+
+    header.addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+      toggleConfig(field.id);
+    });
+
+    const config = document.createElement('div');
+    config.className = 'field-config';
+    config.id = `fc-${field.id}`;
+    config.innerHTML = buildConfigPanel(field, idx);
+
+    div.appendChild(header);
+    div.appendChild(config);
+    return div;
+  }
+
+  function toggleConfig(fieldId) {
+    const cfg = document.getElementById(`fc-${fieldId}`);
+    if (cfg) cfg.classList.toggle('open');
+  }
+
+  function buildConfigPanel(field, idx) {
+    const f = field;
+    const v = f.validate || {};
+
+    let html = `<div style="display:flex;flex-direction:column;gap:12px">`;
+
+    // Common: ID and Label
+    html += `
+      <div class="config-row">
+        <div>
+          <label class="config-label">Field ID</label>
+          <input class="config-input" value="${f.id}" onchange="updateField(${idx},'id',this.value)">
+        </div>
+        <div>
+          <label class="config-label">Label hiển thị</label>
+          <input class="config-input" value="${f.label || ''}" oninput="updateField(${idx},'label',this.value)">
+        </div>
+      </div>
+    `;
+
+    if (f.type === 'section') {
+      html += `</div>`;
+      return html;
+    }
+
+    // Required + Hint
+    html += `
+      <div class="config-row">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label class="config-label" style="margin:0">Bắt buộc</label>
+          <label class="toggle">
+            <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateField(${idx},'required',this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div>
+          <label class="config-label">Hint (hướng dẫn)</label>
+          <input class="config-input" value="${f.hint || ''}" oninput="updateField(${idx},'hint',this.value)" placeholder="Gợi ý cho người dùng">
+        </div>
+      </div>
+    `;
+
+    // Type-specific config
+    switch (f.type) {
+      case 'text':
+      case 'textarea':
+        html += `
+          <div class="config-row">
+            <div>
+              <label class="config-label">Min length</label>
+              <input class="config-input" type="number" value="${v.min_length || ''}" onchange="updateValidate(${idx},'min_length',this.value)" placeholder="0">
+            </div>
+            <div>
+              <label class="config-label">Max length</label>
+              <input class="config-input" type="number" value="${v.max_length || ''}" onchange="updateValidate(${idx},'max_length',this.value)" placeholder="không giới hạn">
+            </div>
+          </div>
+          <div>
+            <label class="config-label">Regex pattern (tùy chọn)</label>
+            <input class="config-input" value="${v.regex || ''}" onchange="updateValidate(${idx},'regex',this.value)" placeholder="vd: ^[A-Za-z]+$">
+          </div>
+          <div>
+            <label class="config-label">Placeholder</label>
+            <input class="config-input" value="${f.placeholder || ''}" oninput="updateField(${idx},'placeholder',this.value)">
+          </div>
+        `;
+        break;
+
+      case 'number':
+        html += `
+          <div class="config-row">
+            <div>
+              <label class="config-label">Min</label>
+              <input class="config-input" type="number" value="${v.min !== undefined ? v.min : ''}" onchange="updateValidate(${idx},'min',this.value)">
+            </div>
+            <div>
+              <label class="config-label">Max</label>
+              <input class="config-input" type="number" value="${v.max !== undefined ? v.max : ''}" onchange="updateValidate(${idx},'max',this.value)">
+            </div>
+          </div>
+          <div class="config-row">
+            <div>
+              <label class="config-label">Warn nếu > (cảnh báo)</label>
+              <input class="config-input" type="number" value="${v.warn_above || ''}" onchange="updateValidate(${idx},'warn_above',this.value)" placeholder="không bắt buộc">
+            </div>
+            <div>
+              <label class="config-label">Đơn vị (unit)</label>
+              <select class="config-input" onchange="updateField(${idx},'unit',this.value)">
+                <option value="">—</option>
+                ${['cm','m','kg','%','VNĐ','cái','người'].map(u => `<option value="${u}" ${f.unit === u ? 'selected' : ''}>${u}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'dropdown':
+        html += `
+          <div>
+            <label class="config-label">Nguồn dữ liệu</label>
+            <select class="config-input" onchange="updateField(${idx},'source',this.value);updateField(${idx},'options',[])">
+              <option value="" ${!f.source ? 'selected' : ''}>— Danh sách tĩnh (nhập tay) —</option>
+              <option value="storeslist_gdv" ${f.source==='storeslist_gdv' ? 'selected' : ''}>Storeslist: GĐV Miền Bắc</option>
+              <option value="storeslist_qlkv" ${f.source==='storeslist_qlkv' ? 'selected' : ''}>Storeslist: QLKV (lọc theo GĐV)</option>
+              <option value="storeslist_ch" ${f.source==='storeslist_ch' ? 'selected' : ''}>Storeslist: Cửa hàng (lọc theo QLKV)</option>
+            </select>
+          </div>
+          ${!f.source ? `
+          <div>
+            <label class="config-label">Danh sách options (mỗi dòng 1 mục)</label>
+            <textarea class="config-input" rows="4" oninput="updateOptionsFromText(${idx},this.value)"
+              placeholder="Option 1&#10;Option 2&#10;Option 3">${(f.options || []).map(o => typeof o === 'object' ? o.label : o).join('\n')}</textarea>
+          </div>
+          ` : `<div class="alert alert-info" style="font-size:0.82rem;padding:10px">
+            ✅ Dữ liệu sẽ được tải động từ Google Sheets Storeslist khi form chạy.
+            ${f.source === 'storeslist_qlkv' || f.source === 'storeslist_ch' ? '<br>⚠️ Cần thêm field <code>depends_on</code> (field GĐV/QLKV phía trên).' : ''}
+          </div>`}
+          ${f.source === 'storeslist_qlkv' ? `
+          <div>
+            <label class="config-label">Phụ thuộc field (depends_on)</label>
+            <input class="config-input" value="${f.depends_on || 'gdv'}" onchange="updateField(${idx},'depends_on',this.value)" placeholder="id của field GĐV">
+          </div>` : ''}
+          ${f.source === 'storeslist_ch' ? `
+          <div>
+            <label class="config-label">Phụ thuộc field (depends_on)</label>
+            <input class="config-input" value="${f.depends_on || 'qlkv'}" onchange="updateField(${idx},'depends_on',this.value)" placeholder="id của field QLKV">
+          </div>` : ''}
+        `;
+        break;
+
+      case 'image':
+        html += `
+          <div class="config-row">
+            <div>
+              <label class="config-label">Min files</label>
+              <input class="config-input" type="number" min="0" value="${v.min_files || 1}" onchange="updateValidate(${idx},'min_files',parseInt(this.value))">
+            </div>
+            <div>
+              <label class="config-label">Max files</label>
+              <input class="config-input" type="number" min="1" value="${v.max_files || 3}" onchange="updateValidate(${idx},'max_files',parseInt(this.value))">
+            </div>
+          </div>
+          <div class="config-row">
+            <div>
+              <label class="config-label">Max KB mỗi ảnh</label>
+              <input class="config-input" type="number" value="${v.max_kb || 200}" onchange="updateValidate(${idx},'max_kb',parseInt(this.value))">
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:20px">
+              <label class="toggle">
+                <input type="checkbox" ${v.auto_resize ? 'checked' : ''} onchange="updateValidate(${idx},'auto_resize',this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+              <label class="config-label" style="margin:0">Tự nén ảnh</label>
+            </div>
+          </div>
+          <div>
+            <label class="config-label">Accept types</label>
+            <input class="config-input" value="${v.accept || 'image/*'}" onchange="updateValidate(${idx},'accept',this.value)" placeholder="image/*">
+          </div>
+        `;
+        break;
+
+      case 'date':
+        html += `
+          <div class="config-row">
+            <div style="display:flex;align-items:center;gap:8px;padding-top:20px">
+              <label class="toggle">
+                <input type="checkbox" ${v.no_past ? 'checked' : ''} onchange="updateValidate(${idx},'no_past',this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+              <label class="config-label" style="margin:0">Không quá khứ</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:20px">
+              <label class="toggle">
+                <input type="checkbox" ${v.no_future ? 'checked' : ''} onchange="updateValidate(${idx},'no_future',this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+              <label class="config-label" style="margin:0">Không tương lai</label>
+            </div>
+          </div>
+          <div class="config-row">
+            <div>
+              <label class="config-label">Min date</label>
+              <input class="config-input" type="date" value="${v.min || ''}" onchange="updateValidate(${idx},'min',this.value)">
+            </div>
+            <div>
+              <label class="config-label">Max date</label>
+              <input class="config-input" type="date" value="${v.max || ''}" onchange="updateValidate(${idx},'max',this.value)">
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'email':
+        html += `
+          <div>
+            <label class="config-label">Domain whitelist (cách nhau bằng dấu phẩy)</label>
+            <input class="config-input" value="${(v.domain_whitelist || []).join(',')}" 
+              onchange="updateValidate(${idx},'domain_whitelist',this.value.split(',').map(s=>s.trim()).filter(Boolean))"
+              placeholder="gmail.com, company.vn (để trống = chấp nhận tất cả)">
+          </div>
+        `;
+        break;
+    }
+
+    html += `</div>`;
+    return html;
+  }
+
+  // ── Field update helpers ──
+  function updateField(idx, key, value) {
+    if (fields[idx]) {
+      fields[idx][key] = value;
+      refreshPreview();
+      // Re-render only the header label
+      const item = document.querySelector(`[data-idx="${idx}"] .fi-label`);
+      if (item && key === 'label') item.textContent = value || '(chưa có tên)';
+    }
+  }
+
+  function updateValidate(idx, key, value) {
+    if (!fields[idx].validate) fields[idx].validate = {};
+    if (value === '' || value === null || value === undefined) {
+      delete fields[idx].validate[key];
+    } else {
+      fields[idx].validate[key] = value;
+    }
+    refreshPreview();
+  }
+
+  function updateOptionsFromText(idx, text) {
+    const opts = text.split('\n').map(s => s.trim()).filter(Boolean);
+    fields[idx].options = opts;
+    refreshPreview();
+  }
+
+  function removeField(idx) {
+    fields.splice(idx, 1);
+    renderFields();
+    refreshPreview();
+  }
+
+  function moveField(idx, dir) {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= fields.length) return;
+    [fields[idx], fields[newIdx]] = [fields[newIdx], fields[idx]];
+    renderFields();
+    refreshPreview();
+  }
+
+  // ── Drag & Drop (palette → canvas) ──
+  function paletteDragStart(e, type) {
+    dragSrcType = type;
+    dragSrcIdx = null;
+    e.dataTransfer.effectAllowed = 'copy';
+  }
+
+  function canvasDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = dragSrcType ? 'copy' : 'move';
+    document.getElementById('empty-zone')?.classList.add('dragover');
+  }
+
+  function canvasDragLeave(e) {
+    document.getElementById('empty-zone')?.classList.remove('dragover');
+  }
+
+  function canvasDrop(e) {
+    e.preventDefault();
+    document.getElementById('empty-zone')?.classList.remove('dragover');
+    if (dragSrcType) {
+      addField(dragSrcType);
+      dragSrcType = null;
+    }
+  }
+
+  // ── Drag & Drop (reorder within list) ──
+  function fieldDragStart(e, idx) {
+    dragSrcIdx = idx;
+    dragSrcType = null;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => {
+      const el = document.querySelector(`[data-idx="${idx}"]`);
+      if (el) el.classList.add('dragging');
+    }, 0);
+  }
+
+  function fieldDragOver(e, idx) {
+    e.preventDefault();
+    if (dragSrcIdx === null || dragSrcIdx === idx) return;
+    dropTargetIdx = idx;
+    document.querySelectorAll('.field-item').forEach((el, i) => {
+      el.classList.toggle('drag-over', i === idx);
+    });
+  }
+
+  function fieldDrop(e, idx) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragSrcIdx !== null && dragSrcIdx !== idx) {
+      const moved = fields.splice(dragSrcIdx, 1)[0];
+      fields.splice(idx, 0, moved);
+      renderFields();
+      refreshPreview();
+    }
+    dragSrcIdx = null;
+    dropTargetIdx = null;
+  }
+
+  function fieldDragEnd() {
+    dragSrcIdx = null;
+    document.querySelectorAll('.field-item').forEach(el => {
+      el.classList.remove('dragging', 'drag-over');
+    });
+  }
+
+  // ── Build JSON config ──
+  function buildConfig() {
+    const id = document.getElementById('meta-id').value.trim();
+    const title = document.getElementById('meta-title').value.trim();
+    const subtitle = document.getElementById('meta-subtitle').value.trim();
+    const webhook = document.getElementById('meta-webhook').value.trim();
+    const enabled = document.getElementById('meta-enabled').value === 'true';
+
+    const cleanFields = fields.map(f => {
+      const cleaned = { id: f.id, type: f.type, label: f.label };
+      if (f.required) cleaned.required = true;
+      if (f.placeholder) cleaned.placeholder = f.placeholder;
+      if (f.hint) cleaned.hint = f.hint;
+      if (f.unit) cleaned.unit = f.unit;
+      if (f.source) cleaned.source = f.source;
+      if (f.depends_on) cleaned.depends_on = f.depends_on;
+      if (f.options && f.options.length) cleaned.options = f.options;
+      if (f.validate) {
+        const v = {};
+        for (const [k, val] of Object.entries(f.validate)) {
+          if (val !== '' && val !== null && val !== undefined) v[k] = val;
+        }
+        if (Object.keys(v).length) cleaned.validate = v;
+      }
+      return cleaned;
+    });
+
+    return { id, title, subtitle, enabled, webhook, fields: cleanFields };
+  }
+
+  function refreshPreview() {
+    updateJsonTab();
+    if (document.getElementById('tab-preview').style.display !== 'none') {
+      renderPreview();
+    }
+  }
+
+  function updateJsonTab() {
+    const cfg = buildConfig();
+    const jsonEl = document.getElementById('json-output');
+    if (jsonEl) jsonEl.textContent = JSON.stringify(cfg, null, 2);
+  }
+
+  function renderPreview() {
+    const cfg = buildConfig();
+    const container = document.getElementById('preview-container');
+    if (!container) return;
+
+    if (!cfg.fields.length) {
+      container.innerHTML = '<p class="text-muted text-center" style="padding:32px">Chưa có fields nào</p>';
+      return;
+    }
+
+    let html = '';
+    if (cfg.title) {
+      html += `<div style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:1.1rem;color:var(--primary)">${cfg.title}</div>
+        ${cfg.subtitle ? `<div class="text-sm text-muted">${cfg.subtitle}</div>` : ''}
+      </div>`;
+    }
+
+    for (const f of cfg.fields) {
+      if (f.type === 'section') {
+        html += `<h3 style="color:var(--primary);font-size:1rem;margin:20px 0 4px;border-bottom:2px solid var(--primary-light);padding-bottom:6px">${f.label}</h3>`;
+        continue;
+      }
+      const req = f.required ? '<span style="color:var(--danger);margin-left:3px">*</span>' : '';
+      html += `<div class="field-group">
+        <label class="field-label">${f.label}${req}</label>`;
+
+      switch(f.type) {
+        case 'text': html += `<input type="text" placeholder="${f.placeholder || ''}" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
+        case 'textarea': html += `<textarea rows="3" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled></textarea>`; break;
+        case 'number':
+          html += `<div style="display:flex">
+            <input type="number" style="flex:1;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px 0 0 8px;font-size:1rem" disabled>
+            ${f.unit ? `<div style="background:var(--gray-100);border:1.5px solid var(--gray-200);border-left:none;border-radius:0 8px 8px 0;padding:10px 14px;display:flex;align-items:center;font-size:0.9rem">${f.unit}</div>` : ''}
+          </div>`; break;
+        case 'dropdown':
+          html += `<select style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem;background:white" disabled>
+            <option>— Chọn ${f.label} —</option>
+            ${f.source ? `<option>(Dữ liệu động từ ${f.source})</option>` : (f.options || []).map(o => `<option>${o}</option>`).join('')}
+          </select>`; break;
+        case 'date': html += `<input type="date" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
+        case 'phone': html += `<input type="tel" placeholder="09x/08x/03x/07x" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
+        case 'email': html += `<input type="email" placeholder="email@domain.com" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
+        case 'image': html += `<div style="border:2px dashed var(--gray-200);border-radius:8px;padding:24px;text-align:center;color:var(--gray-400)">📷 Chọn ảnh (${f.validate?.min_files||1}–${f.validate?.max_files||3} ảnh, max ${f.validate?.max_kb||200}KB)</div>`; break;
+      }
+      if (f.hint) html += `<div class="field-hint">${f.hint}</div>`;
+      html += `</div>`;
+    }
+
+    html += `<button class="btn btn-primary btn-block" disabled style="margin-top:16px">📤 Gửi dữ liệu</button>`;
+    container.innerHTML = html;
+  }
+
+  // ── Tabs ──
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ['builder','preview','json'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    });
+    if (tab === 'preview') renderPreview();
+    if (tab === 'json') updateJsonTab();
+  }
+
+  // ── JSON output ──
+  function showJsonOutput() {
+    switchTab('json', document.querySelectorAll('.tab-btn')[2]);
+    updateJsonTab();
+  }
+
+  function copyJson() {
+    const text = document.getElementById('json-output').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('✅ Đã copy JSON!', 'success');
+    });
+  }
+
+  function downloadJson() {
+    const cfg = buildConfig();
+    const id = cfg.id || 'form';
+    const text = JSON.stringify(cfg, null, 2);
+    const blob = new Blob([text], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${id}-config.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function clearAll() {
+    if (!fields.length || confirm('Xóa tất cả fields?')) {
+      fields = [];
+      renderFields();
+      refreshPreview();
+    }
+  }
+
+  // ── Load sample config (mat-tien) ──
+  function loadSampleConfig() {
+    if (fields.length && !confirm('Load mẫu sẽ xóa fields hiện tại. Tiếp tục?')) return;
+
+    document.getElementById('meta-id').value = 'mat-tien';
+    document.getElementById('meta-title').value = 'Thống kê kích thước mặt tiền';
+    document.getElementById('meta-subtitle').value = 'Đo kích thước Block mặt kính để dán POSM';
+    document.getElementById('meta-webhook').value = 'https://script.google.com/macros/s/AKfycby_LLllWe8zOTbt1Wtqp9NVQPlmXlE60DOUnqo_7-w6d6S18VDNrBJ6Iksp8z-eIv8tWg/exec';
+    document.getElementById('meta-enabled').value = 'true';
+
+    fields = [
+      { id:'gdv', type:'dropdown', label:'Giám đốc Vùng (GĐV)', required:true, source:'storeslist_gdv' },
+      { id:'qlkv', type:'dropdown', label:'QLKV phụ trách', required:true, source:'storeslist_qlkv', depends_on:'gdv' },
+      { id:'ch', type:'dropdown', label:'Cửa hàng', required:true, source:'storeslist_ch', depends_on:'qlkv' },
+      { id:'kv1', type:'number', label:'Mặt kính KV CHT', required:true, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
+      { id:'kv2', type:'number', label:'Cửa kính ra vào', required:true, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
+      { id:'kv3', type:'number', label:'Mặt kính còn lại 01', required:false, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
+      { id:'kv4', type:'number', label:'Mặt kính còn lại 02 (Lô góc)', required:false, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
+      { id:'kv5', type:'number', label:'Mặt kính còn lại 03 (Lô góc)', required:false, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
+      { id:'photos', type:'image', label:'Ảnh mặt tiền', required:true, validate:{min_files:1,max_files:3,max_kb:200,auto_resize:true} }
+    ];
+
+    renderFields();
+    refreshPreview();
+    showToast('✅ Đã load config mẫu mat-tien!', 'success');
+  }
+
+  function showToast(msg, type = '') {
+    let toast = document.getElementById('rf-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'rf-toast';
+      toast.className = 'toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.className = `toast ${type}`;
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // ── Init ──
+  renderFields();
+  refreshPreview();
+</script>
+</body>
+</html>
