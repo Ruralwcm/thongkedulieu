@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Thống kê kích thước mặt tiền</title>
+  <meta name="description" content="Form đo kích thước Block mặt kính để dán POSM - Rural WCM">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <style>
+    /* Inline SVG icons */
+    #icons-inline { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- Inline SVG icons -->
+<div id="icons-inline">
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></symbol>
+  </svg>
+</div>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-logo">📐</div>
+    <div>
+      <h1 id="form-title-h">Thống kê kích thước mặt tiền</h1>
+      <p id="form-subtitle-p">Đo kích thước Block mặt kính để dán POSM</p>
+    </div>
+  </div>
+</header>
+
+<!-- Loading screen -->
+<div id="loading-screen" style="display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px">
+  <div class="loading-spinner" style="width:36px;height:36px;border-width:3px;border-color:var(--gray-300);border-top-color:var(--primary)"></div>
+  <p class="text-muted">Đang tải form...</p>
+</div>
+
+<!-- Form body -->
+<main class="container" id="form-body" style="display:none">
+  <!-- Form header card -->
+  <div class="card" id="form-header" style="background:linear-gradient(135deg,var(--primary-light),white);border-left:4px solid var(--primary-mid)">
+    <div class="flex items-center gap-8" style="gap:12px">
+      <div>
+        <div class="font-bold" style="color:var(--primary)" class="form-title">Thống kê kích thước mặt tiền</div>
+        <div class="text-sm text-muted form-subtitle">Đo kích thước Block mặt kính để dán POSM</div>
+      </div>
+    </div>
+    <div class="mt-2" style="font-size:0.82rem;color:var(--gray-500)">
+      ⏰ Thời gian ghi nhận: <span id="current-time">—</span>
+    </div>
+  </div>
+
+  <!-- Form fields -->
+  <div class="card">
+    <div id="form-fields"></div>
+
+    <div class="submit-wrap">
+      <button id="submit-btn" class="btn btn-primary btn-block" type="button">
+        📤 Gửi dữ liệu
+      </button>
+      <p class="text-xs text-muted text-center mt-2">Dữ liệu sẽ được lưu tự động vào hệ thống</p>
+    </div>
+  </div>
+</main>
+
+<!-- Success screen -->
+<div id="success-screen" style="display:none" class="container">
+  <div class="card">
+    <div class="success-screen">
+      <div class="success-icon">✅</div>
+      <h2>Gửi thành công!</h2>
+      <p>Dữ liệu mặt tiền đã được ghi nhận vào hệ thống.<br>Cảm ơn bạn đã điền đầy đủ thông tin.</p>
+      <button class="btn btn-primary" onclick="location.reload()">
+        📋 Điền form mới
+      </button>
+      <a href="../../" class="btn btn-secondary mt-2" style="margin-left:8px">
+        🏠 Trang chủ
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="../../engine/validator.js"></script>
+<script src="../../engine/form-engine.js"></script>
+<script>
+  // Show current time
+  function updateTime() {
+    const el = document.getElementById('current-time');
+    if (el) el.textContent = new Date().toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day:'2-digit', month:'2-digit', year:'numeric',
+      hour:'2-digit', minute:'2-digit'
+    });
+  }
+  updateTime();
+  setInterval(updateTime, 30000);
+
+  // Init form engine with config
+  // Path relative from this file: ../../forms/mat-tien/config.json
+  // On GitHub Pages: /forms/mat-tien/config.json (need to detect base)
+  (function() {
+    // Determine base URL for config
+    const currentPath = window.location.pathname;
+    // Try to find base by detecting /f/ in path
+    let configUrl;
+    if (currentPath.includes('/f/mat-tien')) {
+      const base = currentPath.replace(/\/f\/mat-tien\/?.*$/, '');
+      configUrl = base + '/forms/mat-tien/config.json';
+    } else {
+      // Fallback: relative path
+      configUrl = '../../forms/mat-tien/config.json';
+    }
+
+    // Override header after load
+    FormEngine._onConfigLoaded = function() {
+      const h = document.getElementById('form-title-h');
+      const s = document.getElementById('form-subtitle-p');
+      const fc = document.querySelector('.form-title');
+      const fs = document.querySelector('.form-subtitle');
+      if (h && FormEngine.config) h.textContent = FormEngine.config.title;
+      if (s && FormEngine.config) s.textContent = FormEngine.config.subtitle || '';
+      if (fc && FormEngine.config) fc.textContent = FormEngine.config.title;
+      if (fs && FormEngine.config) fs.textContent = FormEngine.config.subtitle || '';
+    };
+
+    FormEngine.init(configUrl);
+  })();
+</script>
+
+</body>
+</html>
