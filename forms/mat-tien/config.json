@@ -1,0 +1,18 @@
+{
+  "id": "mat-tien",
+  "title": "Thống kê kích thước mặt tiền",
+  "subtitle": "Đo kích thước Block mặt kính để dán POSM",
+  "enabled": true,
+  "webhook": "https://script.google.com/macros/s/AKfycby_LLllWe8zOTbt1Wtqp9NVQPlmXlE60DOUnqo_7-w6d6S18VDNrBJ6Iksp8z-eIv8tWg/exec",
+  "fields": [
+    {"id":"gdv","type":"dropdown","label":"Giám đốc Vùng (GĐV)","required":true,"source":"storeslist_gdv"},
+    {"id":"qlkv","type":"dropdown","label":"QLKV phụ trách","required":true,"source":"storeslist_qlkv","depends_on":"gdv"},
+    {"id":"ch","type":"dropdown","label":"Cửa hàng","required":true,"source":"storeslist_ch","depends_on":"qlkv"},
+    {"id":"kv1","type":"number","label":"Mặt kính KV CHT","required":true,"unit":"cm","validate":{"min":1,"max":9999,"warn_above":400}},
+    {"id":"kv2","type":"number","label":"Cửa kính ra vào","required":true,"unit":"cm","validate":{"min":1,"max":9999,"warn_above":400}},
+    {"id":"kv3","type":"number","label":"Mặt kính còn lại 01","required":false,"unit":"cm","validate":{"min":1,"max":9999,"warn_above":400}},
+    {"id":"kv4","type":"number","label":"Mặt kính còn lại 02 (Lô góc)","required":false,"unit":"cm","validate":{"min":1,"max":9999,"warn_above":400}},
+    {"id":"kv5","type":"number","label":"Mặt kính còn lại 03 (Lô góc)","required":false,"unit":"cm","validate":{"min":1,"max":9999,"warn_above":400}},
+    {"id":"photos","type":"image","label":"Ảnh mặt tiền","required":true,"validate":{"min_files":1,"max_files":3,"max_kb":200,"auto_resize":true}}
+  ]
+}
