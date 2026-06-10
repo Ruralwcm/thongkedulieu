@@ -125,7 +125,7 @@ async function submitForm(){
   document.getElementById('spinner').style.display='block';alertEl.innerHTML='';
   const imgs=[];
   for(const f of selectedFiles){const b64=await resizeImage(f,200);imgs.push({name:f.name,type:'image/jpeg',data:b64});}
-  const payload={gdv,qlkv,ch,kv1:document.getElementById('kv1').value||'',kv2:document.getElementById('kv2').value||'',kv3:document.getElementById('kv3').value||'',kv4:document.getElementById('kv4').value||'',kv5:document.getElementById('kv5').value||'',images:imgs,timestamp:new Date().toISOString()};
+  const payload={form_title:"Thống kê kích thước mặt tiền",gdv,qlkv,ch,kv1:document.getElementById('kv1').value||'',kv2:document.getElementById('kv2').value||'',kv3:document.getElementById('kv3').value||'',kv4:document.getElementById('kv4').value||'',kv5:document.getElementById('kv5').value||'',images:imgs,timestamp:new Date().toISOString()};
   const form=document.createElement('form');form.method='POST';form.action=WEBHOOK_URL;form.target='iframeTarget';form.style.display='none';
   const input=document.createElement('input');input.type='hidden';input.name='payload';input.value=JSON.stringify(payload);
   form.appendChild(input);document.body.appendChild(form);
