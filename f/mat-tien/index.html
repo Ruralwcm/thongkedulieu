@@ -1,133 +1,141 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Thống kê kích thước mặt tiền</title>
-  <meta name="description" content="Form đo kích thước Block mặt kính để dán POSM - Rural WCM">
-  <link rel="stylesheet" href="../../assets/style.css">
-  <style>
-    /* Inline SVG icons */
-    #icons-inline { display: none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Thống kê kích thước mặt tiền</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f0f4f8;width:100%;min-height:100vh}
+:root{--fs-sm:clamp(13px,3.5vw,15px);--fs-md:clamp(15px,4vw,17px);--fs-lg:clamp(17px,4.5vw,20px);--pad:clamp(10px,3vw,16px)}
+.header{background:linear-gradient(135deg,#1a3c6e,#2d6abf);color:white;padding:clamp(12px,3vw,18px) var(--pad);text-align:center}
+.header h1{font-size:var(--fs-lg);font-weight:700;margin-bottom:3px}
+.header p{font-size:var(--fs-sm);opacity:.85}
+.form-wrap{width:100%;padding:10px var(--pad) 60px;max-width:640px;margin:0 auto}
+.card{background:white;border-radius:14px;padding:clamp(14px,3.5vw,20px);margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card-title{font-size:var(--fs-md);font-weight:700;color:#1a3c6e;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e8f0fe;display:flex;align-items:center;gap:8px}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;background:#2d6abf;color:white;border-radius:50%;width:clamp(24px,6vw,30px);height:clamp(24px,6vw,30px);font-size:var(--fs-sm);font-weight:700;flex-shrink:0}
+.field{margin-bottom:clamp(10px,2.5vw,14px)}
+label{display:block;font-size:var(--fs-sm);font-weight:600;color:#333;margin-bottom:6px}
+.req{color:#e53935}
+select,input[type=number]{display:block;width:100%;padding:clamp(12px,3vw,15px) clamp(12px,3vw,16px);border:2px solid #d0d7e2;border-radius:10px;font-size:clamp(16px,4vw,18px);color:#222;background:white;-webkit-appearance:none;appearance:none;outline:none;min-height:clamp(48px,12vw,56px)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23555' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+select:focus,input:focus{border-color:#2d6abf;box-shadow:0 0 0 3px rgba(45,106,191,.15)}
+select:disabled{background-color:#f5f5f5;color:#aaa}
+.kv-row{display:flex;align-items:center;gap:clamp(8px,2vw,12px);background:#f8faff;border-radius:10px;padding:clamp(10px,2.5vw,13px) clamp(10px,2.5vw,14px);border:2px solid #e8f0fe;margin-bottom:8px}
+.kv-left{flex:1;min-width:0}
+.kv-name{font-size:var(--fs-sm);font-weight:600;color:#1a3c6e}
+.kv-tag{display:inline-block;font-size:clamp(10px,2.5vw,12px);padding:2px 7px;border-radius:20px;font-weight:700;margin-top:3px}
+.kv-tag.req{background:#fce4ec;color:#c62828}
+.kv-tag.opt{background:#e8f5e9;color:#2e7d32}
+.kv-warn{font-size:clamp(11px,3vw,13px);color:#c62828;background:#fce4ec;padding:5px 8px;border-radius:6px;margin-top:4px;display:none}
+.kv-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.kv-right input{width:clamp(80px,20vw,110px);padding:clamp(10px,2.5vw,13px) 10px;font-size:clamp(16px,4vw,19px);font-weight:700;text-align:center;border:2px solid #d0d7e2;border-radius:8px;background:white;-webkit-appearance:none;appearance:none;min-height:clamp(46px,11vw,54px)}
+.kv-right input:focus{border-color:#2d6abf;outline:none}
+.kv-unit{font-size:var(--fs-sm);color:#555;font-weight:700}
+.upload-area{border:2px dashed #b0c4de;border-radius:12px;padding:clamp(20px,5vw,28px) var(--pad);text-align:center;cursor:pointer;background:#f8faff;-webkit-tap-highlight-color:transparent}
+.upload-area:active{border-color:#2d6abf;background:#eef3ff}
+.upload-icon{font-size:clamp(28px,8vw,36px);margin-bottom:8px}
+.upload-text{font-size:var(--fs-sm);color:#555;line-height:1.6}
+.upload-text strong{color:#2d6abf}
+#fileInput{display:none}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.preview-item{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:2px solid #d0d7e2}
+.preview-item img{width:100%;height:100%;object-fit:cover;display:block}
+.del-btn{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.65);color:white;border:none;border-radius:50%;width:clamp(24px,6vw,30px);height:clamp(24px,6vw,30px);font-size:clamp(12px,3vw,14px);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn-submit{display:block;width:100%;padding:clamp(14px,4vw,18px);background:linear-gradient(135deg,#1a3c6e,#2d6abf);color:white;border:none;border-radius:12px;font-size:var(--fs-lg);font-weight:700;cursor:pointer;min-height:clamp(52px,13vw,60px);margin-top:4px;-webkit-tap-highlight-color:transparent}
+.btn-submit:active{opacity:.85}
+.btn-submit:disabled{opacity:.45}
+.alert{padding:12px 14px;border-radius:10px;font-size:var(--fs-sm);margin-top:10px;line-height:1.5}
+.alert-warn{background:#fff3e0;color:#e65100;border:1px solid #ffcc80}
+.alert-success{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.alert-error{background:#fce4ec;color:#b71c1c;border:1px solid #f48fb1}
+.spinner{text-align:center;padding:12px;color:#2d6abf;font-size:var(--fs-sm);display:none}
+#iframeTarget{display:none}
+</style>
 </head>
 <body>
-
-<!-- Inline SVG icons -->
-<div id="icons-inline">
-  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
-    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></symbol>
-  </svg>
+<iframe name="iframeTarget" id="iframeTarget"></iframe>
+<div class="header">
+  <h1>📐 Thống kê kích thước mặt tiền</h1>
+  <p>Đo kích thước Block mặt kính để dán POSM</p>
 </div>
-
-<!-- Header -->
-<header class="app-header">
-  <div class="header-inner">
-    <div class="header-logo">📐</div>
-    <div>
-      <h1 id="form-title-h">Thống kê kích thước mặt tiền</h1>
-      <p id="form-subtitle-p">Đo kích thước Block mặt kính để dán POSM</p>
-    </div>
-  </div>
-</header>
-
-<!-- Loading screen -->
-<div id="loading-screen" style="display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px">
-  <div class="loading-spinner" style="width:36px;height:36px;border-width:3px;border-color:var(--gray-300);border-top-color:var(--primary)"></div>
-  <p class="text-muted">Đang tải form...</p>
-</div>
-
-<!-- Form body -->
-<main class="container" id="form-body" style="display:none">
-  <!-- Form header card -->
-  <div class="card" id="form-header" style="background:linear-gradient(135deg,var(--primary-light),white);border-left:4px solid var(--primary-mid)">
-    <div class="flex items-center gap-8" style="gap:12px">
-      <div>
-        <div class="font-bold" style="color:var(--primary)" class="form-title">Thống kê kích thước mặt tiền</div>
-        <div class="text-sm text-muted form-subtitle">Đo kích thước Block mặt kính để dán POSM</div>
-      </div>
-    </div>
-    <div class="mt-2" style="font-size:0.82rem;color:var(--gray-500)">
-      ⏰ Thời gian ghi nhận: <span id="current-time">—</span>
-    </div>
-  </div>
-
-  <!-- Form fields -->
+<div class="form-wrap">
   <div class="card">
-    <div id="form-fields"></div>
-
-    <div class="submit-wrap">
-      <button id="submit-btn" class="btn btn-primary btn-block" type="button">
-        📤 Gửi dữ liệu
-      </button>
-      <p class="text-xs text-muted text-center mt-2">Dữ liệu sẽ được lưu tự động vào hệ thống</p>
-    </div>
+    <div class="card-title"><span class="step-badge">1</span>Thông tin cửa hàng</div>
+    <div class="field"><label>Giám đốc Vùng (GĐV) <span class="req">*</span></label>
+      <select id="selGDV" onchange="onGDVChange()"><option value="">— Chọn GĐV —</option></select></div>
+    <div class="field"><label>QLKV phụ trách <span class="req">*</span></label>
+      <select id="selQLKV" disabled onchange="onQLKVChange()"><option value="">— Chọn GĐV trước —</option></select></div>
+    <div class="field"><label>Cửa hàng <span class="req">*</span></label>
+      <select id="selCH" disabled><option value="">— Chọn QLKV trước —</option></select></div>
   </div>
-</main>
-
-<!-- Success screen -->
-<div id="success-screen" style="display:none" class="container">
   <div class="card">
-    <div class="success-screen">
-      <div class="success-icon">✅</div>
-      <h2>Gửi thành công!</h2>
-      <p>Dữ liệu mặt tiền đã được ghi nhận vào hệ thống.<br>Cảm ơn bạn đã điền đầy đủ thông tin.</p>
-      <button class="btn btn-primary" onclick="location.reload()">
-        📋 Điền form mới
-      </button>
-      <a href="../../" class="btn btn-secondary mt-2" style="margin-left:8px">
-        🏠 Trang chủ
-      </a>
-    </div>
+    <div class="card-title"><span class="step-badge">2</span>Kích thước các khu vực mặt kính</div>
+    <div id="kvGrid"></div>
   </div>
+  <div class="card">
+    <div class="card-title"><span class="step-badge">3</span>Ảnh mặt tiền <span style="font-size:var(--fs-sm);color:#e53935;font-weight:400">(bắt buộc tối thiểu 1 ảnh)</span></div>
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📸</div>
+      <div class="upload-text">Nhấn để chọn ảnh<br><strong>JPG · PNG · Tối thiểu 1, tối đa 3 ảnh</strong><br><span style="font-size:.85em;color:#888">Ảnh tự động nén về dưới 200KB</span></div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple onchange="onFileSelect(event)">
+    <div class="preview-grid" id="previewGrid"></div>
+    <div id="imgAlert"></div>
+  </div>
+  <div id="submitAlert"></div>
+  <div class="spinner" id="spinner">⏳ Đang gửi dữ liệu...</div>
+  <button class="btn-submit" id="btnSubmit" onclick="submitForm()">✅ Gửi báo cáo</button>
 </div>
-
-<script src="../../engine/validator.js"></script>
-<script src="../../engine/form-engine.js"></script>
 <script>
-  // Show current time
-  function updateTime() {
-    const el = document.getElementById('current-time');
-    if (el) el.textContent = new Date().toLocaleString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      day:'2-digit', month:'2-digit', year:'numeric',
-      hour:'2-digit', minute:'2-digit'
-    });
-  }
-  updateTime();
-  setInterval(updateTime, 30000);
+const WEBHOOK_URL='WEBHOOK_PLACEHOLDER';
+const CH_DATA=DATA_PLACEHOLDER;
+const GDV_LIST=['Nguyễn Duy Đoàn','Lê Thị Hồng Thu','Phạm Minh Thu','Tạ Công Nhận','Tạ Quốc Huy','Đặng Văn Dũng','Hồ Nam','Nguyễn Mạnh Sơn'];
+const KV_LIST=[{id:'kv1',label:'Mặt kính KV CHT',req:true},{id:'kv2',label:'Cửa kính ra vào',req:true},{id:'kv3',label:'Mặt kính còn lại 01',req:false},{id:'kv4',label:'Mặt kính còn lại 02 (Lô góc)',req:false},{id:'kv5',label:'Mặt kính còn lại 03 (Lô góc)',req:false}];
+const MAX_CM=400,MAX_IMGS=3;
+let selectedFiles=[];
 
-  // Init form engine with config
-  // Path relative from this file: ../../forms/mat-tien/config.json
-  // On GitHub Pages: /forms/mat-tien/config.json (need to detect base)
-  (function() {
-    // Determine base URL for config
-    const currentPath = window.location.pathname;
-    // Try to find base by detecting /f/ in path
-    let configUrl;
-    if (currentPath.includes('/f/mat-tien')) {
-      const base = currentPath.replace(/\/f\/mat-tien\/?.*$/, '');
-      configUrl = base + '/forms/mat-tien/config.json';
-    } else {
-      // Fallback: relative path
-      configUrl = '../../forms/mat-tien/config.json';
-    }
+window.onload=function(){
+  const sel=document.getElementById('selGDV');
+  GDV_LIST.forEach(g=>{if(CH_DATA[g]&&Object.keys(CH_DATA[g]).length){const o=document.createElement('option');o.value=o.textContent=g;sel.appendChild(o);}});
+  const grid=document.getElementById('kvGrid');
+  KV_LIST.forEach(kv=>{const d=document.createElement('div');d.className='kv-row';d.innerHTML=`<div class="kv-left"><div class="kv-name">${kv.label}</div><span class="kv-tag ${kv.req?'req':'opt'}">${kv.req?'Bắt buộc':'Tuỳ chọn'}</span><div class="kv-warn" id="${kv.id}_warn">⚠️ Kích thước > 400cm!</div></div><div class="kv-right"><input type="number" id="${kv.id}" placeholder="0" min="1" max="9999" inputmode="decimal" oninput="checkKV('${kv.id}')"><span class="kv-unit">cm</span></div>`;grid.appendChild(d);});
+};
 
-    // Override header after load
-    FormEngine._onConfigLoaded = function() {
-      const h = document.getElementById('form-title-h');
-      const s = document.getElementById('form-subtitle-p');
-      const fc = document.querySelector('.form-title');
-      const fs = document.querySelector('.form-subtitle');
-      if (h && FormEngine.config) h.textContent = FormEngine.config.title;
-      if (s && FormEngine.config) s.textContent = FormEngine.config.subtitle || '';
-      if (fc && FormEngine.config) fc.textContent = FormEngine.config.title;
-      if (fs && FormEngine.config) fs.textContent = FormEngine.config.subtitle || '';
-    };
+function onGDVChange(){const gdv=document.getElementById('selGDV').value,selQ=document.getElementById('selQLKV'),selC=document.getElementById('selCH');selQ.innerHTML='<option value="">— Chọn QLKV —</option>';selC.innerHTML='<option value="">— Chọn QLKV trước —</option>';selC.disabled=true;if(!gdv){selQ.disabled=true;return;}selQ.disabled=false;Object.keys(CH_DATA[gdv]||{}).sort().forEach(q=>{const o=document.createElement('option');o.value=o.textContent=q;selQ.appendChild(o);});}
+function onQLKVChange(){const gdv=document.getElementById('selGDV').value,qlkv=document.getElementById('selQLKV').value,sel=document.getElementById('selCH');sel.innerHTML='<option value="">— Chọn cửa hàng —</option>';if(!qlkv){sel.disabled=true;return;}sel.disabled=false;(CH_DATA[gdv]?.[qlkv]||[]).forEach(ch=>{const o=document.createElement('option');o.value=o.textContent=ch;sel.appendChild(o);});}
+function checkKV(id){const v=parseFloat(document.getElementById(id).value);document.getElementById(id+'_warn').style.display=(!isNaN(v)&&v>MAX_CM)?'block':'none';}
 
-    FormEngine.init(configUrl);
-  })();
+function onFileSelect(e){const files=Array.from(e.target.files),alertEl=document.getElementById('imgAlert');if(selectedFiles.length+files.length>MAX_IMGS){alertEl.innerHTML=`<div class="alert alert-warn">⚠️ Tối đa ${MAX_IMGS} ảnh.</div>`;document.getElementById('fileInput').value='';return;}alertEl.innerHTML='';files.slice(0,MAX_IMGS-selectedFiles.length).forEach(file=>{const idx=selectedFiles.length;selectedFiles.push(file);const reader=new FileReader();reader.onload=ev=>{const item=document.createElement('div');item.className='preview-item';item.innerHTML=`<img src="${ev.target.result}"><button class="del-btn" onclick="removeFile(${idx})">✕</button>`;document.getElementById('previewGrid').appendChild(item);};reader.readAsDataURL(file);});document.getElementById('fileInput').value='';}
+function removeFile(idx){selectedFiles.splice(idx,1);const grid=document.getElementById('previewGrid');grid.innerHTML='';selectedFiles.forEach((file,i)=>{const reader=new FileReader();reader.onload=ev=>{const item=document.createElement('div');item.className='preview-item';item.innerHTML=`<img src="${ev.target.result}"><button class="del-btn" onclick="removeFile(${i})">✕</button>`;grid.appendChild(item);};reader.readAsDataURL(file);});}
+
+function resizeImage(file,maxKB=200){return new Promise(res=>{const reader=new FileReader();reader.onload=ev=>{const img=new Image();img.onload=()=>{if(file.size<=maxKB*1024){res(ev.target.result.split(',')[1]);return;}const canvas=document.createElement('canvas');let quality=0.85,scale=1;const tryCompress=()=>{canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const dataUrl=canvas.toDataURL('image/jpeg',quality);const bytes=Math.round((dataUrl.length-22)*3/4);if(bytes<=maxKB*1024||quality<=0.3){res(dataUrl.split(',')[1]);return;}if(quality>0.4)quality-=0.1;else{scale*=0.85;quality=0.6;}tryCompress();};tryCompress();};img.src=ev.target.result;};reader.readAsDataURL(file);});}
+
+async function submitForm(){
+  const gdv=document.getElementById('selGDV').value,qlkv=document.getElementById('selQLKV').value,ch=document.getElementById('selCH').value;
+  const alertEl=document.getElementById('submitAlert');
+  if(!gdv||!qlkv||!ch){alertEl.innerHTML='<div class="alert alert-error">⚠️ Chọn đủ GĐV · QLKV · Cửa hàng!</div>';window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(!document.getElementById('kv1').value||!document.getElementById('kv2').value){alertEl.innerHTML='<div class="alert alert-error">⚠️ Điền đủ 2 khu vực bắt buộc!</div>';return;}
+  if(selectedFiles.length===0){alertEl.innerHTML='<div class="alert alert-error">⚠️ Vui lòng chụp ít nhất 1 ảnh mặt tiền!</div>';document.getElementById('fileInput').scrollIntoView({behavior:'smooth'});return;}
+  const hasWarn=KV_LIST.some(kv=>{const v=parseFloat(document.getElementById(kv.id).value);return !isNaN(v)&&v>MAX_CM;});
+  if(hasWarn&&!confirm('⚠️ Có khu vực > 400cm. Xác nhận gửi?'))return;
+  const btn=document.getElementById('btnSubmit');btn.disabled=true;
+  document.getElementById('spinner').style.display='block';alertEl.innerHTML='';
+  const imgs=[];
+  for(const f of selectedFiles){const b64=await resizeImage(f,200);imgs.push({name:f.name,type:'image/jpeg',data:b64});}
+  const payload={gdv,qlkv,ch,kv1:document.getElementById('kv1').value||'',kv2:document.getElementById('kv2').value||'',kv3:document.getElementById('kv3').value||'',kv4:document.getElementById('kv4').value||'',kv5:document.getElementById('kv5').value||'',images:imgs,timestamp:new Date().toISOString()};
+  const form=document.createElement('form');form.method='POST';form.action=WEBHOOK_URL;form.target='iframeTarget';form.style.display='none';
+  const input=document.createElement('input');input.type='hidden';input.name='payload';input.value=JSON.stringify(payload);
+  form.appendChild(input);document.body.appendChild(form);
+  const iframe=document.getElementById('iframeTarget');
+  iframe.onload=function(){try{document.body.removeChild(form);}catch(e){}document.getElementById('spinner').style.display='none';btn.disabled=false;alertEl.innerHTML='<div class="alert alert-success">✅ Gửi thành công! Cảm ơn bạn.</div>';resetForm();};
+  form.submit();
+  setTimeout(()=>{if(btn.disabled){document.getElementById('spinner').style.display='none';btn.disabled=false;alertEl.innerHTML='<div class="alert alert-success">✅ Đã gửi!</div>';try{document.body.removeChild(form);}catch(e){}resetForm();}},15000);
+}
+
+function resetForm(){document.getElementById('selGDV').value='';document.getElementById('selQLKV').innerHTML='<option value="">— Chọn GĐV trước —</option>';document.getElementById('selQLKV').disabled=true;document.getElementById('selCH').innerHTML='<option value="">— Chọn QLKV trước —</option>';document.getElementById('selCH').disabled=true;KV_LIST.forEach(kv=>{document.getElementById(kv.id).value='';document.getElementById(kv.id+'_warn').style.display='none';});selectedFiles=[];document.getElementById('previewGrid').innerHTML='';}
 </script>
-
 </body>
 </html>
