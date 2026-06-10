@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RuralForms — Admin Dashboard</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+    .stat-card { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; text-align:center; }
+    .stat-num { font-size:2rem; font-weight:800; color:var(--primary); line-height:1.1; }
+    .stat-label { font-size:0.8rem; color:var(--gray-500); margin-top:4px; }
+    .form-row td { vertical-align:middle; }
+    .action-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:20px; }
+    .form-url { font-size:0.78rem; color:var(--gray-400); font-family:monospace; margin-top:2px; }
+    .submissions-modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; z-index:1000; align-items:flex-end; }
+    .submissions-modal.open { display:flex; }
+    .modal-sheet { background:white; border-radius:var(--radius) var(--radius) 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:24px; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .close-btn { background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--gray-500); }
+    @media (min-width:600px) {
+      .submissions-modal { align-items:center; }
+      .modal-sheet { border-radius:var(--radius); max-width:720px; margin:auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login screen -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">🔐</div>
+    <h2>RuralForms Admin</h2>
+    <p>Đăng nhập để quản lý forms</p>
+    <div class="field-group" style="text-align:left">
+      <label class="field-label">Mật khẩu</label>
+      <input type="password" id="password-input" placeholder="Nhập mật khẩu..." autocomplete="current-password">
+      <div class="field-error" id="login-error"></div>
+    </div>
+    <button class="btn btn-primary btn-block mt-3" onclick="doLogin()">Đăng nhập</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <header class="app-header">
+    <div class="header-inner" style="max-width:1000px;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="header-logo">📊</div>
+        <div>
+          <h1>RuralForms Admin</h1>
+          <p>Quản lý forms & dữ liệu</p>
+        </div>
+      </div>
+      <nav class="admin-nav">
+        <a href="#" class="active" id="nav-forms">📋 Forms</a>
+        <a href="builder/" id="nav-builder">🔧 Builder</a>
+        <a href="#" onclick="doLogout()" style="color:rgba(255,255,255,0.6)">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container" style="max-width:1000px">
+    <!-- Stats -->
+    <div class="stat-grid" id="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">Tổng số forms</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-active">—</div>
+        <div class="stat-label">Forms đang hoạt động</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-submissions">—</div>
+        <div class="stat-label">Tổng submissions</div>
+      </div>
+    </div>
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <h2 style="flex:1;font-size:1.1rem">Danh sách Forms</h2>
+      <button class="btn btn-primary btn-sm" onclick="location.href='builder/'">
+        ➕ Tạo form mới
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="loadForms()">
+        🔄 Refresh
+      </button>
+    </div>
+
+    <!-- Forms table -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="table-wrap">
+        <table id="forms-table">
+          <thead>
+            <tr>
+              <th>Form</th>
+              <th>URL</th>
+              <th>Trạng thái</th>
+              <th>Submissions</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="forms-tbody">
+            <tr><td colspan="5" class="text-center text-muted" style="padding:32px">Đang tải...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="text-xs text-muted mt-2" style="text-align:center">
+      💡 Mật khẩu admin: <code>rural2026</code> · Dữ liệu đọc từ forms/*/config.json
+    </p>
+  </div>
+</div>
+
+<!-- Submissions Modal -->
+<div class="submissions-modal" id="submissions-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3 id="modal-title">Submissions</h3>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body">
+      <p class="text-muted">Đang tải dữ liệu...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ADMIN_PASS = 'rural2026';
+  const SESSION_KEY = 'rf_admin_auth';
+
+  // Known forms (in a real setup, this would come from an index file)
+  // For GitHub Pages (static), we maintain a forms registry
+  const FORMS_REGISTRY = [
+    {
+      id: 'mat-tien',
+      title: 'Thống kê kích thước mặt tiền',
+      subtitle: 'Đo kích thước Block mặt kính để dán POSM',
+      url: '../f/mat-tien/',
+      configUrl: '../forms/mat-tien/config.json',
+      sheetId: null, // Can be configured per form
+    }
+  ];
+
+  function doLogin() {
+    const val = document.getElementById('password-input').value;
+    if (val === ADMIN_PASS) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      showDashboard();
+    } else {
+      const err = document.getElementById('login-error');
+      err.textContent = 'Mật khẩu không đúng';
+      err.classList.add('show');
+      document.getElementById('password-input').focus();
+    }
+  }
+
+  document.getElementById('password-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  function doLogout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+
+  function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadForms();
+  }
+
+  async function loadForms() {
+    const tbody = document.getElementById('forms-tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:32px">🔄 Đang tải...</td></tr>';
+
+    const results = [];
+    for (const form of FORMS_REGISTRY) {
+      try {
+        const res = await fetch(form.configUrl + '?t=' + Date.now());
+        const cfg = await res.json();
+        results.push({ ...form, config: cfg, enabled: cfg.enabled !== false });
+      } catch(e) {
+        results.push({ ...form, config: null, enabled: false, error: true });
+      }
+    }
+
+    renderFormsTable(results);
+    updateStats(results);
+  }
+
+  function renderFormsTable(forms) {
+    const tbody = document.getElementById('forms-tbody');
+    if (!forms.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:32px">Chưa có forms nào</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = forms.map(form => `
+      <tr class="form-row">
+        <td>
+          <div class="font-bold">${form.config?.title || form.title}</div>
+          <div class="text-xs text-muted">${form.config?.subtitle || form.subtitle || ''}</div>
+          <div class="text-xs" style="color:var(--gray-400);font-family:monospace">${form.id}</div>
+        </td>
+        <td>
+          <a href="${form.url}" target="_blank" class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.78rem">
+            🔗 Mở form
+          </a>
+          <div class="form-url">${window.location.origin}${form.url.replace('../', '/').replace('./', '/')}</div>
+        </td>
+        <td>
+          <label class="toggle" title="${form.enabled ? 'Đang hoạt động' : 'Tạm ngưng'}">
+            <input type="checkbox" ${form.enabled ? 'checked' : ''} onchange="toggleForm('${form.id}', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+          <div class="text-xs text-muted mt-1">${form.enabled ? '✅ Hoạt động' : '⏸️ Tạm ngưng'}</div>
+        </td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="viewSubmissions('${form.id}', '${form.config?.webhook || ''}')">
+            📊 Xem data
+          </button>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;flex-direction:column">
+            <a href="builder/?edit=${form.id}" class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.78rem">
+              ✏️ Chỉnh sửa
+            </a>
+            <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;min-height:28px;padding:4px 10px;font-size:0.78rem"
+              onclick="copyFormLink('${form.url}')">
+              📋 Copy link
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function updateStats(forms) {
+    document.getElementById('stat-total').textContent = forms.length;
+    document.getElementById('stat-active').textContent = forms.filter(f => f.enabled).length;
+    document.getElementById('stat-submissions').textContent = '—';
+  }
+
+  function toggleForm(id, enabled) {
+    // In a static GitHub Pages setup, we can't modify files directly
+    // Show instructions instead
+    showToast(`Để ${enabled ? 'bật' : 'tắt'} form "${id}", hãy sửa "enabled": ${enabled} trong forms/${id}/config.json và commit lên GitHub`, 'warning', 6000);
+  }
+
+  function copyFormLink(url) {
+    const fullUrl = window.location.origin + url.replace('../', '/').replace('./', '/');
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      showToast('✅ Đã copy link!', 'success');
+    }).catch(() => {
+      prompt('Copy link này:', fullUrl);
+    });
+  }
+
+  async function viewSubmissions(formId, webhook) {
+    const modal = document.getElementById('submissions-modal');
+    const title = document.getElementById('modal-title');
+    const body = document.getElementById('modal-body');
+
+    title.textContent = `Submissions: ${formId}`;
+    body.innerHTML = '<p class="text-muted">📡 Đang kết nối với Google Sheets...</p>';
+    modal.classList.add('open');
+
+    // Try to fetch from webhook (read endpoint)
+    // Google Apps Script webhook may have a GET handler for reading
+    if (webhook) {
+      try {
+        const readUrl = webhook + '?action=read&form_id=' + formId;
+        const res = await fetch(readUrl);
+        const data = await res.json();
+        if (data.rows && data.rows.length) {
+          renderSubmissions(body, data.rows);
+        } else {
+          body.innerHTML = renderNoData(formId);
+        }
+      } catch(e) {
+        body.innerHTML = renderNoData(formId);
+      }
+    } else {
+      body.innerHTML = renderNoData(formId);
+    }
+  }
+
+  function renderNoData(formId) {
+    return `
+      <div class="alert alert-info">
+        <strong>ℹ️ Không thể tải submissions trực tiếp</strong><br>
+        Do Google Apps Script có thể chưa có endpoint GET để đọc dữ liệu.
+        <br><br>
+        <strong>Xem dữ liệu:</strong><br>
+        1. Mở Google Sheet gắn với webhook của form <strong>${formId}</strong><br>
+        2. Hoặc cấu hình endpoint GET trong Google Apps Script
+        <br><br>
+        <a href="https://docs.google.com/spreadsheets/" target="_blank" class="btn btn-secondary btn-sm">
+          📊 Mở Google Sheets
+        </a>
+      </div>
+    `;
+  }
+
+  function renderSubmissions(container, rows) {
+    if (!rows.length) {
+      container.innerHTML = '<p class="text-muted text-center" style="padding:32px">Chưa có dữ liệu</p>';
+      return;
+    }
+    const headers = Object.keys(rows[0]);
+    container.innerHTML = `
+      <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+        <table>
+          <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${rows.map(row => `<tr>${headers.map(h => `<td>${row[h] || '—'}</td>`).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-muted mt-2">${rows.length} submissions</p>
+    `;
+  }
+
+  function closeModal() {
+    document.getElementById('submissions-modal').classList.remove('open');
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('submissions-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  function showToast(msg, type = '', duration = 3500) {
+    let toast = document.getElementById('rf-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'rf-toast';
+      toast.className = 'toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.className = `toast ${type}`;
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => toast.classList.remove('show'), duration);
+  }
+
+  // Auto login if session exists
+  if (sessionStorage.getItem(SESSION_KEY)) {
+    showDashboard();
+  }
+</script>
+</body>
+</html>
