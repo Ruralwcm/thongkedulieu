@@ -1,849 +1,1449 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Builder — RuralForms</title>
-  <link rel="stylesheet" href="../../assets/style.css">
-  <style>
-    .builder-layout { display:grid; grid-template-columns:280px 1fr; gap:20px; align-items:start; }
-    @media (max-width:768px) { .builder-layout { grid-template-columns:1fr; } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form Builder — RuralForms Admin</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<style>
+/* ── Builder Layout ── */
+.builder-layout {
+  display: flex;
+  gap: 0;
+  min-height: calc(100vh - 64px);
+}
 
-    /* Left palette */
-    .field-palette { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; position:sticky; top:80px; }
-    .palette-title { font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--gray-400); margin-bottom:10px; letter-spacing:0.05em; }
-    .palette-item {
-      display:flex; align-items:center; gap:10px;
-      padding:10px 12px; border-radius:var(--radius-sm);
-      cursor:pointer; transition:background 0.15s; margin-bottom:6px;
-      font-size:0.9rem; font-weight:500; color:var(--gray-700);
-      border:1.5px solid var(--gray-200); background:white;
-      user-select:none;
-    }
-    .palette-item:hover { background:var(--primary-light); border-color:var(--primary-mid); color:var(--primary); }
-    .palette-item .pi-icon { font-size:1.1rem; width:28px; text-align:center; }
+/* Sidebar */
+.sidebar {
+  width: 320px;
+  min-width: 280px;
+  background: white;
+  border-right: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+.sidebar-header {
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+.sidebar-header h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gray-500);
+}
+.sidebar-body {
+  padding: 16px 20px;
+  flex: 1;
+}
 
-    /* Builder canvas */
-    .builder-canvas { }
-    .canvas-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-    .fields-list { min-height:200px; }
-    .empty-drop-zone {
-      border:2px dashed var(--gray-200); border-radius:var(--radius);
-      padding:40px; text-align:center; color:var(--gray-400);
-      margin-bottom:12px; transition:border-color 0.2s, background 0.2s;
-    }
-    .empty-drop-zone.dragover { border-color:var(--primary-mid); background:var(--primary-light); }
+/* Form group */
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 5px;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  background: white;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary-mid);
+  box-shadow: 0 0 0 3px rgba(45,106,191,0.1);
+}
+.form-group textarea { resize: vertical; min-height: 60px; }
 
-    /* Field item */
-    .field-item { user-select:none; }
-    .field-item-header { gap:6px; }
-    .fi-title { flex:1; }
-    .fi-label { font-weight:600; font-size:0.9rem; }
-    .fi-req { color:var(--danger); font-size:0.8rem; margin-left:4px; }
+.validity-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.validity-row input[type="date"] { flex: 1; }
+.validity-row .sep { color: var(--gray-400); font-size: 0.85rem; white-space: nowrap; }
 
-    /* Config panel */
-    .field-config { background:var(--gray-50); border-radius:var(--radius-sm); }
-    .config-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .config-row.one { grid-template-columns:1fr; }
-    .config-label { font-size:0.82rem; font-weight:600; color:var(--gray-600); margin-bottom:4px; display:block; }
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+.toggle-row label { margin: 0; font-size: 0.9rem; color: var(--gray-700); font-weight: 500; }
 
-    .config-input {
-      width:100%; padding:7px 10px; border:1.5px solid var(--gray-200);
-      border-radius:6px; font-size:0.88rem; min-height:36px;
-      font-family:var(--font); color:var(--gray-800);
-    }
-    .config-input:focus { outline:none; border-color:var(--primary-mid); }
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-switch .slider {
+  position: absolute;
+  inset: 0;
+  background: var(--gray-300);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-switch .slider::before {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .slider { background: var(--success); }
+.toggle-switch input:checked + .slider::before { transform: translateX(20px); }
 
-    /* Preview panel */
-    .preview-panel { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; }
-    .preview-title { font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--gray-400); margin-bottom:12px; letter-spacing:0.05em; }
+/* Main area */
+.main-area {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+.main-area-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.main-area-header h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gray-800);
+}
 
-    /* JSON output */
-    .json-output {
-      background:var(--gray-800); color:#7dd3fc; padding:16px;
-      border-radius:var(--radius-sm); font-size:0.8rem; font-family:monospace;
-      white-space:pre; overflow:auto; max-height:400px; line-height:1.6;
-    }
-    .tab-nav { display:flex; border-bottom:2px solid var(--gray-200); margin-bottom:16px; }
-    .tab-btn {
-      padding:10px 20px; font-size:0.9rem; font-weight:600; cursor:pointer;
-      border:none; background:none; color:var(--gray-500); border-bottom:2px solid transparent;
-      margin-bottom:-2px; transition:color 0.2s;
-    }
-    .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--gray-100);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+.tab-btn {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
 
-    .drag-over-indicator {
-      height:4px; background:var(--primary-mid); border-radius:2px;
-      margin:4px 0; opacity:0; transition:opacity 0.2s;
-    }
-    .drag-over-indicator.show { opacity:1; }
+/* Action buttons bar */
+.action-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+  white-space: nowrap;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-mid); }
+.btn-secondary { background: var(--gray-100); color: var(--gray-700); border: 1.5px solid var(--gray-200); }
+.btn-secondary:hover { background: var(--gray-200); }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #0ea271; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-sm { padding: 5px 10px; font-size: 0.82rem; }
+.btn-icon { padding: 6px 8px; font-size: 1rem; line-height: 1; }
 
-    /* Options list (for dropdown) */
-    .options-list { margin-top:8px; }
-    .option-row { display:flex; gap:6px; margin-bottom:6px; align-items:center; }
-    .option-row input { flex:1; padding:6px 10px; border:1.5px solid var(--gray-200); border-radius:6px; font-size:0.85rem; min-height:32px; }
-  </style>
+/* Section card */
+.section-card {
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
+  color: white;
+}
+.section-title-input {
+  flex: 1;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font);
+  outline: none;
+}
+.section-title-input::placeholder { color: rgba(255,255,255,0.6); }
+.section-title-input:focus { border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.25); }
+.section-id-badge {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  background: rgba(255,255,255,0.2);
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.section-body {
+  padding: 12px 16px;
+}
+
+/* Field card */
+.field-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  background: var(--gray-50);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.field-card:hover { border-color: var(--primary-mid); background: var(--primary-light); }
+.field-card.editing { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 3px rgba(45,106,191,0.12); }
+.field-type-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--primary-light);
+  color: var(--primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.field-info { flex: 1; min-width: 0; }
+.field-label { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field-sub { font-size: 0.78rem; color: var(--gray-500); }
+.field-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.btn-move {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  transition: all 0.15s;
+}
+.btn-move:hover { background: var(--gray-100); border-color: var(--gray-300); }
+.btn-move:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-delete {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: white;
+  border: 1.5px solid #fca5a5;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--danger);
+  transition: all 0.15s;
+}
+.btn-delete:hover { background: #fee2e2; }
+
+/* Add field zone */
+.add-field-zone {
+  margin-top: 8px;
+  padding: 10px 0 4px;
+  border-top: 1.5px dashed var(--gray-200);
+}
+
+/* Empty section */
+.empty-fields {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-400);
+  font-size: 0.88rem;
+}
+
+/* Add section button */
+.add-section-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--gray-500);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+.add-section-btn:hover { border-color: var(--primary-mid); color: var(--primary); background: var(--primary-light); }
+
+/* Inline field editor */
+.field-editor {
+  margin-top: 8px;
+  background: white;
+  border: 1.5px solid var(--primary-mid);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: none;
+}
+.field-editor.open { display: block; }
+.field-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.field-editor-grid .full { grid-column: 1/-1; }
+.field-editor h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.field-editor-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+}
+.editor-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 4px;
+}
+.editor-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  outline: none;
+  background: white;
+}
+.editor-input:focus { border-color: var(--primary-mid); box-shadow: 0 0 0 2px rgba(45,106,191,0.08); }
+.editor-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.editor-checkbox-row label { font-size: 0.88rem; color: var(--gray-700); cursor: pointer; }
+.editor-checkbox-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+/* JSON preview */
+.json-preview {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 20px;
+  border-radius: var(--radius);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.json-preview .key { color: #7dd3fc; }
+.json-preview .str { color: #86efac; }
+.json-preview .num { color: #fda4af; }
+.json-preview .bool { color: #c4b5fd; }
+.json-preview .null { color: #94a3b8; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalIn 0.18s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(-8px); } to { opacity: 1; transform: none; } }
+.modal-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--gray-800); }
+.modal-close {
+  width: 32px; height: 32px;
+  background: var(--gray-100);
+  border: none; border-radius: 6px;
+  cursor: pointer; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-600);
+  transition: background 0.15s;
+}
+.modal-close:hover { background: var(--gray-200); }
+.modal-body { padding: 18px 20px; }
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--gray-100);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Field type picker */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.type-card {
+  padding: 12px 8px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: white;
+}
+.type-card:hover { border-color: var(--primary-mid); background: var(--primary-light); }
+.type-card.selected { border-color: var(--primary); background: var(--primary-light); }
+.type-card .type-icon { font-size: 1.5rem; margin-bottom: 4px; }
+.type-card .type-name { font-size: 0.78rem; font-weight: 700; color: var(--gray-700); }
+.type-card .type-desc { font-size: 0.7rem; color: var(--gray-500); margin-top: 2px; }
+
+/* Config form in modal */
+.config-form { margin-top: 16px; border-top: 1px solid var(--gray-100); padding-top: 14px; }
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.config-grid .full { grid-column: 1/-1; }
+
+/* Notification */
+.notif {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--gray-800);
+  color: white;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  z-index: 2000;
+  animation: notifIn 0.2s ease;
+  max-width: 300px;
+}
+@keyframes notifIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.notif.success { background: var(--success); }
+.notif.error { background: var(--danger); }
+
+/* Header nav */
+.admin-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
+  color: white;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: var(--shadow-md);
+}
+.admin-header .logo { display: flex; align-items: center; gap: 10px; }
+.admin-header .logo span { font-size: 1.1rem; font-weight: 700; }
+.admin-header .logo .badge {
+  background: rgba(255,255,255,0.2);
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.admin-header nav { display: flex; gap: 8px; }
+.nav-link {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
+
+/* Required star */
+.req { color: var(--danger); margin-left: 2px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--gray-100); }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .builder-layout { flex-direction: column; }
+  .sidebar { width: 100%; position: static; height: auto; max-height: none; }
+  .main-area { padding: 16px; }
+  .config-grid, .field-editor-grid { grid-template-columns: 1fr; }
+  .config-grid .full, .field-editor-grid .full { grid-column: 1; }
+  .type-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-header nav { display: none; }
+}
+</style>
 </head>
 <body>
 
-<header class="app-header">
-  <div class="header-inner" style="max-width:1200px;justify-content:space-between">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="header-logo">🔧</div>
-      <div>
-        <h1>Form Builder</h1>
-        <p>Tạo và chỉnh sửa form kéo thả</p>
-      </div>
-    </div>
-    <nav class="admin-nav">
-      <a href="../">📊 Dashboard</a>
-      <a href="#" class="active">🔧 Builder</a>
-    </nav>
+<!-- Header -->
+<header class="admin-header">
+  <div class="logo">
+    <span>🌿 RuralForms</span>
+    <span class="badge">Form Builder</span>
   </div>
+  <nav>
+    <a class="nav-link" href="../index.html">📊 Dashboard</a>
+    <a class="nav-link active" href="#">🔧 Builder</a>
+  </nav>
 </header>
 
-<div class="container" style="max-width:1200px">
+<!-- Builder Layout -->
+<div class="builder-layout">
 
-  <!-- Form meta card -->
-  <div class="card" style="margin-bottom:16px">
-    <div class="config-row" style="grid-template-columns:1fr 1fr 1fr;gap:12px">
-      <div>
-        <label class="config-label">Form ID <span style="color:var(--danger)">*</span></label>
-        <input type="text" class="config-input" id="meta-id" placeholder="vd: mat-tien" oninput="refreshPreview()">
+  <!-- Sidebar: Form Metadata -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>⚙️ Cấu hình form</h2>
+    </div>
+    <div class="sidebar-body">
+
+      <div class="form-group">
+        <label>Form ID (slug) <span class="req">*</span></label>
+        <input type="text" id="meta-id" placeholder="vd: mat-tien" oninput="updatePreview()">
       </div>
-      <div>
-        <label class="config-label">Tiêu đề form <span style="color:var(--danger)">*</span></label>
-        <input type="text" class="config-input" id="meta-title" placeholder="Tên hiển thị" oninput="refreshPreview()">
+      <div class="form-group">
+        <label>Tên form <span class="req">*</span></label>
+        <input type="text" id="meta-title" placeholder="Thống kê kích thước mặt tiền" oninput="updatePreview()">
       </div>
-      <div>
-        <label class="config-label">Mô tả ngắn</label>
-        <input type="text" class="config-input" id="meta-subtitle" placeholder="Mô tả form" oninput="refreshPreview()">
+      <div class="form-group">
+        <label>Mô tả</label>
+        <textarea id="meta-subtitle" placeholder="Mô tả ngắn về mục đích form" oninput="updatePreview()"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Webhook URL</label>
+        <input type="url" id="meta-webhook" placeholder="https://script.google.com/..." oninput="updatePreview()">
+      </div>
+
+      <div class="form-group">
+        <label>Hiệu lực từ ngày</label>
+        <input type="date" id="meta-valid-from" oninput="updatePreview()">
+      </div>
+      <div class="form-group">
+        <label>Hiệu lực đến ngày <small style="color:var(--gray-400)">(để trống = vô thời hạn)</small></label>
+        <input type="date" id="meta-valid-to" oninput="updatePreview()">
+      </div>
+
+      <div class="toggle-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="meta-active" checked onchange="updatePreview()">
+          <span class="slider"></span>
+        </label>
+        <label for="meta-active" style="cursor:pointer">Trạng thái: <strong id="active-label">Bật</strong></label>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--gray-200);margin:16px 0">
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary" onclick="openLoadSample()">📂 Load mẫu mat-tien</button>
+        <button class="btn btn-secondary" onclick="clearAll()">🗑️ Xóa tất cả</button>
       </div>
     </div>
-    <div class="config-row" style="grid-template-columns:1fr 100px;gap:12px;margin-top:10px">
-      <div>
-        <label class="config-label">Webhook URL (Google Apps Script)</label>
-        <input type="url" class="config-input" id="meta-webhook" placeholder="https://script.google.com/macros/s/..." oninput="refreshPreview()">
-      </div>
-      <div>
-        <label class="config-label">Trạng thái</label>
-        <select class="config-input" id="meta-enabled" onchange="refreshPreview()">
-          <option value="true">✅ Bật</option>
-          <option value="false">⏸️ Tắt</option>
-        </select>
-      </div>
-    </div>
-  </div>
+  </aside>
 
-  <div class="builder-layout">
-
-    <!-- Left: Field palette -->
-    <div class="field-palette">
-      <div class="palette-title">Loại trường dữ liệu</div>
-      <div id="field-palette">
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'text')" onclick="addField('text')">
-          <span class="pi-icon">📝</span> Text
+  <!-- Main: Sections & Fields -->
+  <main class="main-area">
+    <div class="main-area-header">
+      <h2 id="form-title-display">Chưa có tên form</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('builder',this)">✏️ Builder</button>
+          <button class="tab-btn" onclick="switchTab('preview',this)">{ } JSON Preview</button>
         </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'textarea')" onclick="addField('textarea')">
-          <span class="pi-icon">📄</span> Textarea
+        <div class="action-bar">
+          <button class="btn btn-secondary btn-sm" onclick="copyJSON()">📋 Copy</button>
+          <button class="btn btn-success btn-sm" onclick="downloadJSON()">⬇️ Download</button>
         </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'number')" onclick="addField('number')">
-          <span class="pi-icon">🔢</span> Number
-        </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'dropdown')" onclick="addField('dropdown')">
-          <span class="pi-icon">📋</span> Dropdown
-        </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'image')" onclick="addField('image')">
-          <span class="pi-icon">📷</span> Ảnh/File
-        </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'date')" onclick="addField('date')">
-          <span class="pi-icon">📅</span> Ngày
-        </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'phone')" onclick="addField('phone')">
-          <span class="pi-icon">📱</span> SĐT Việt Nam
-        </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'email')" onclick="addField('email')">
-          <span class="pi-icon">📧</span> Email
-        </div>
-        <div class="palette-item" draggable="true" ondragstart="paletteDragStart(event,'section')" onclick="addField('section')">
-          <span class="pi-icon">📌</span> Section / Tiêu đề
-        </div>
-      </div>
-
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-200)">
-        <div class="palette-title">Thao tác</div>
-        <button class="btn btn-primary btn-block btn-sm mb-2" onclick="showJsonOutput()">
-          💾 Xuất JSON Config
-        </button>
-        <button class="btn btn-secondary btn-block btn-sm mb-2" onclick="loadSampleConfig()">
-          📥 Load mẫu mat-tien
-        </button>
-        <button class="btn btn-sm btn-block" style="background:#fee2e2;color:#991b1b" onclick="clearAll()">
-          🗑️ Xóa tất cả
-        </button>
       </div>
     </div>
 
-    <!-- Right: Builder canvas + Preview -->
-    <div class="builder-canvas">
-      <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('builder',this)">🔧 Builder</button>
-        <button class="tab-btn" onclick="switchTab('preview',this)">👁️ Preview</button>
-        <button class="tab-btn" onclick="switchTab('json',this)">📋 JSON</button>
-      </div>
+    <!-- Builder Tab -->
+    <div id="tab-builder" class="tab-panel active">
+      <div id="sections-container"></div>
+      <button class="add-section-btn" onclick="addSection()">
+        <span style="font-size:1.3rem">＋</span> Thêm Section
+      </button>
+    </div>
 
-      <!-- Builder tab -->
-      <div id="tab-builder">
-        <div class="fields-list" id="fields-list"
-          ondragover="canvasDragOver(event)" ondrop="canvasDrop(event)" ondragleave="canvasDragLeave(event)">
-          <div class="empty-drop-zone" id="empty-zone">
-            <div style="font-size:2.5rem;margin-bottom:12px">🏗️</div>
-            <div style="font-weight:600;color:var(--gray-500)">Kéo thả hoặc click field type để thêm</div>
-            <div class="text-sm text-muted mt-1">Các fields sẽ hiển thị ở đây</div>
-          </div>
-        </div>
+    <!-- JSON Preview Tab -->
+    <div id="tab-preview" class="tab-panel">
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+        <span style="font-size:0.88rem;color:var(--gray-500)">Preview realtime — cập nhật khi bạn chỉnh sửa</span>
+        <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="copyJSON()">📋 Copy JSON</button>
+        <button class="btn btn-success btn-sm" onclick="downloadJSON()">⬇️ Download</button>
       </div>
+      <pre id="json-display" class="json-preview"></pre>
+    </div>
+  </main>
+</div>
 
-      <!-- Preview tab -->
-      <div id="tab-preview" style="display:none">
-        <div class="preview-panel">
-          <div class="preview-title">Preview Form</div>
-          <div id="preview-container">
-            <p class="text-muted text-center" style="padding:32px">Thêm fields để xem preview</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- JSON tab -->
-      <div id="tab-json" style="display:none">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <h3 style="font-size:1rem">JSON Config</h3>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-secondary btn-sm" onclick="copyJson()">📋 Copy</button>
-              <button class="btn btn-primary btn-sm" onclick="downloadJson()">⬇️ Download</button>
-            </div>
-          </div>
-          <pre class="json-output" id="json-output">// Thêm fields và điền thông tin form để xem JSON</pre>
-          <div class="alert alert-info mt-3" style="font-size:0.83rem">
-            <strong>📝 Deploy lên GitHub Pages:</strong><br>
-            1. Copy JSON trên → paste vào file <code>forms/&lt;id&gt;/config.json</code><br>
-            2. Tạo <code>f/&lt;id&gt;/index.html</code> (copy từ <code>f/mat-tien/index.html</code>, sửa đường dẫn config)<br>
-            3. Thêm form vào <code>FORMS_REGISTRY</code> trong <code>admin/index.html</code><br>
-            4. Commit & push → GitHub Pages tự deploy
-          </div>
-        </div>
-      </div>
+<!-- Modal: Add Field -->
+<div id="modal-add-field" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>➕ Thêm Field mới</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem;color:var(--gray-500);margin-bottom:12px">Chọn loại field:</p>
+      <div class="type-grid" id="type-grid"></div>
+      <div class="config-form" id="modal-config-form" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Hủy</button>
+      <button class="btn btn-primary" id="btn-confirm-add" onclick="confirmAddField()" disabled>✓ Thêm field</button>
     </div>
   </div>
 </div>
 
+<!-- Notification -->
+<div id="notif" class="notif" style="display:none"></div>
+
 <script>
-  // ── State ──
-  let fields = [];
-  let dragSrcType = null;   // type being dragged from palette
-  let dragSrcIdx = null;    // index being dragged from list
-  let dropTargetIdx = null;
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let sections = [];
+let addingToSectionId = null;
+let selectedType = null;
+let editingField = null; // {sectionId, fieldId}
+let sectionCounter = 0;
 
-  const TYPE_DEFAULTS = {
-    text: { label:'Trường Text', required:false, placeholder:'', validate:{} },
-    textarea: { label:'Trường Textarea', required:false, placeholder:'', validate:{} },
-    number: { label:'Trường Number', required:false, unit:'', validate:{ min:'', max:'', warn_above:'' } },
-    dropdown: { label:'Dropdown', required:false, source:'', options:[] },
-    image: { label:'Ảnh/File', required:false, validate:{ min_files:1, max_files:3, max_kb:200, auto_resize:true } },
-    date: { label:'Ngày', required:false, validate:{ no_past:false, no_future:false } },
-    phone: { label:'Số điện thoại VN', required:false },
-    email: { label:'Email', required:false, validate:{} },
-    section: { label:'Tiêu đề phần' }
-  };
+// ═══════════════════════════════════════════
+// FIELD TYPE DEFINITIONS
+// ═══════════════════════════════════════════
+const FIELD_TYPES = [
+  { type: 'text', icon: '📝', name: 'Text', desc: 'Nhập văn bản' },
+  { type: 'number', icon: '🔢', name: 'Number', desc: 'Số / đơn vị' },
+  { type: 'dropdown_static', icon: '📋', name: 'Dropdown', desc: 'Danh sách tĩnh' },
+  { type: 'dropdown_storeslist', icon: '🏪', name: 'Stores List', desc: 'GĐV/QLKV/CH' },
+  { type: 'image', icon: '📷', name: 'Image', desc: 'Upload ảnh' },
+  { type: 'date', icon: '📅', name: 'Date', desc: 'Chọn ngày' },
+  { type: 'textarea', icon: '📄', name: 'Textarea', desc: 'Văn bản dài' },
+  { type: 'phone_vn', icon: '📱', name: 'Phone VN', desc: '09x/08x/03x' },
+  { type: 'email', icon: '✉️', name: 'Email', desc: 'Địa chỉ email' },
+];
 
-  function genId(type) {
-    return type + '_' + Date.now().toString(36);
-  }
+// ═══════════════════════════════════════════
+// SECTION MANAGEMENT
+// ═══════════════════════════════════════════
+function addSection(data) {
+  sectionCounter++;
+  const id = data?.id || `s${sectionCounter}`;
+  const title = data?.title || `Section ${sectionCounter}`;
+  const fields = data?.fields || [];
+  sections.push({ id, title, fields });
+  renderSections();
+  updatePreview();
+}
 
-  // ── Add field ──
-  function addField(type) {
-    const field = {
-      id: genId(type),
-      type,
-      ...JSON.parse(JSON.stringify(TYPE_DEFAULTS[type] || {}))
-    };
-    fields.push(field);
-    renderFields();
-    refreshPreview();
-    // Open config of newly added field
-    setTimeout(() => {
-      const cfg = document.getElementById(`fc-${field.id}`);
-      if (cfg) cfg.classList.add('open');
-    }, 50);
-  }
+function deleteSection(sectionId) {
+  if (!confirm('Xóa section này và tất cả fields bên trong?')) return;
+  sections = sections.filter(s => s.id !== sectionId);
+  renderSections();
+  updatePreview();
+}
 
-  // ── Render fields list ──
-  function renderFields() {
-    const list = document.getElementById('fields-list');
-    const emptyZone = document.getElementById('empty-zone');
-    if (emptyZone) emptyZone.style.display = fields.length ? 'none' : 'block';
+function updateSectionTitle(sectionId, title) {
+  const s = sections.find(s => s.id === sectionId);
+  if (s) { s.title = title; updatePreview(); }
+}
 
-    // Remove existing field items (keep empty zone)
-    list.querySelectorAll('.field-item, .drag-over-indicator').forEach(el => el.remove());
+// ═══════════════════════════════════════════
+// FIELD MANAGEMENT
+// ═══════════════════════════════════════════
+function openAddFieldModal(sectionId) {
+  addingToSectionId = sectionId;
+  selectedType = null;
+  editingField = null;
+  document.getElementById('modal-config-form').style.display = 'none';
+  document.getElementById('modal-config-form').innerHTML = '';
+  document.getElementById('btn-confirm-add').disabled = true;
+  renderTypeGrid();
+  document.getElementById('modal-add-field').classList.remove('hidden');
+  // Reset header
+  document.querySelector('#modal-add-field .modal-header h3').textContent = '➕ Thêm Field mới';
+  document.getElementById('btn-confirm-add').textContent = '✓ Thêm field';
+}
 
-    fields.forEach((field, idx) => {
-      const item = buildFieldItem(field, idx);
-      list.appendChild(item);
-    });
-  }
+function renderTypeGrid() {
+  const grid = document.getElementById('type-grid');
+  grid.innerHTML = FIELD_TYPES.map(ft => `
+    <div class="type-card ${selectedType === ft.type ? 'selected' : ''}" onclick="selectType('${ft.type}')">
+      <div class="type-icon">${ft.icon}</div>
+      <div class="type-name">${ft.name}</div>
+      <div class="type-desc">${ft.desc}</div>
+    </div>
+  `).join('');
+}
 
-  function buildFieldItem(field, idx) {
-    const div = document.createElement('div');
-    div.className = 'field-item card';
-    div.style.marginBottom = '10px';
-    div.draggable = true;
-    div.dataset.idx = idx;
+function selectType(type) {
+  selectedType = type;
+  renderTypeGrid();
+  renderConfigForm(type);
+  document.getElementById('btn-confirm-add').disabled = false;
+}
 
-    div.addEventListener('dragstart', e => fieldDragStart(e, idx));
-    div.addEventListener('dragover', e => fieldDragOver(e, idx));
-    div.addEventListener('drop', e => fieldDrop(e, idx));
-    div.addEventListener('dragend', () => fieldDragEnd());
+function renderConfigForm(type, existing) {
+  const container = document.getElementById('modal-config-form');
+  container.style.display = 'block';
+  const e = existing || {};
 
-    const isRequired = field.required;
-    const header = document.createElement('div');
-    header.className = 'field-item-header';
-    header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer';
-    header.innerHTML = `
-      <span style="cursor:grab;color:var(--gray-300);font-size:1.1rem;padding:4px" class="drag-handle">⠿</span>
-      <span class="field-item-type">${field.type}</span>
-      <div class="fi-title">
-        <span class="fi-label">${field.label || '(chưa có tên)'}</span>
-        ${isRequired ? '<span class="fi-req">*</span>' : ''}
-      </div>
-      <div style="display:flex;gap:4px">
-        <button onclick="toggleConfig('${field.id}')" class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.78rem">⚙️</button>
-        <button onclick="moveField(${idx}, -1)" class="btn btn-secondary btn-sm" title="Lên" style="min-height:28px;padding:4px 8px">↑</button>
-        <button onclick="moveField(${idx}, 1)" class="btn btn-secondary btn-sm" title="Xuống" style="min-height:28px;padding:4px 8px">↓</button>
-        <button onclick="removeField(${idx})" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;min-height:28px;padding:4px 8px">✕</button>
-      </div>
-    `;
+  let html = `<div class="config-grid">
+    <div class="full">
+      <label class="editor-label">Field ID <span class="req">*</span></label>
+      <input class="editor-input" id="cfg-id" type="text" placeholder="vd: ten_field" value="${e.id||''}">
+    </div>
+    <div class="full">
+      <label class="editor-label">Label (nhãn hiển thị) <span class="req">*</span></label>
+      <input class="editor-input" id="cfg-label" type="text" placeholder="vd: Mặt kính KV CHT" value="${e.label||''}">
+    </div>`;
 
-    header.addEventListener('click', e => {
-      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-      toggleConfig(field.id);
-    });
+  // Type-specific fields
+  switch(type) {
+    case 'text':
+      html += `
+    <div>
+      <label class="editor-label">Min length</label>
+      <input class="editor-input" id="cfg-min-len" type="number" min="0" placeholder="0" value="${e.validate?.min_length||''}">
+    </div>
+    <div>
+      <label class="editor-label">Max length</label>
+      <input class="editor-input" id="cfg-max-len" type="number" min="0" placeholder="255" value="${e.validate?.max_length||''}">
+    </div>
+    <div class="full">
+      <label class="editor-label">Placeholder</label>
+      <input class="editor-input" id="cfg-placeholder" type="text" placeholder="Gợi ý nhập liệu..." value="${e.placeholder||''}">
+    </div>`;
+      break;
 
-    const config = document.createElement('div');
-    config.className = 'field-config';
-    config.id = `fc-${field.id}`;
-    config.innerHTML = buildConfigPanel(field, idx);
+    case 'textarea':
+      html += `
+    <div>
+      <label class="editor-label">Min length</label>
+      <input class="editor-input" id="cfg-min-len" type="number" min="0" value="${e.validate?.min_length||''}">
+    </div>
+    <div>
+      <label class="editor-label">Max length</label>
+      <input class="editor-input" id="cfg-max-len" type="number" min="0" value="${e.validate?.max_length||''}">
+    </div>
+    <div class="full">
+      <label class="editor-label">Placeholder</label>
+      <input class="editor-input" id="cfg-placeholder" type="text" value="${e.placeholder||''}">
+    </div>`;
+      break;
 
-    div.appendChild(header);
-    div.appendChild(config);
-    return div;
-  }
+    case 'number':
+      html += `
+    <div>
+      <label class="editor-label">Min</label>
+      <input class="editor-input" id="cfg-num-min" type="number" placeholder="0" value="${e.validate?.min ?? ''}">
+    </div>
+    <div>
+      <label class="editor-label">Max</label>
+      <input class="editor-input" id="cfg-num-max" type="number" placeholder="9999" value="${e.validate?.max ?? ''}">
+    </div>
+    <div>
+      <label class="editor-label">Cảnh báo trên ngưỡng (warn_above)</label>
+      <input class="editor-input" id="cfg-warn-above" type="number" placeholder="vd: 400" value="${e.validate?.warn_above ?? ''}">
+    </div>
+    <div>
+      <label class="editor-label">Đơn vị</label>
+      <select class="editor-input" id="cfg-unit">
+        <option value="">-- chọn --</option>
+        ${['cm','m','kg','%','pcs','đ'].map(u=>`<option value="${u}" ${(e.unit||'')==u?'selected':''}>${u}</option>`).join('')}
+        <option value="__custom__" ${e.unit&&!['cm','m','kg','%','pcs','đ'].includes(e.unit)?'selected':''}>Khác...</option>
+      </select>
+    </div>
+    <div class="full" id="custom-unit-wrap" style="${e.unit&&!['cm','m','kg','%','pcs','đ'].includes(e.unit)?'':'display:none'}">
+      <label class="editor-label">Đơn vị tùy chỉnh</label>
+      <input class="editor-input" id="cfg-unit-custom" type="text" placeholder="vd: lần" value="${e.unit&&!['cm','m','kg','%','pcs','đ'].includes(e.unit)?e.unit:''}">
+    </div>`;
+      break;
 
-  function toggleConfig(fieldId) {
-    const cfg = document.getElementById(`fc-${fieldId}`);
-    if (cfg) cfg.classList.toggle('open');
-  }
+    case 'dropdown_static':
+      html += `
+    <div class="full">
+      <label class="editor-label">Danh sách options <small style="color:var(--gray-400)">(mỗi dòng 1 option)</small></label>
+      <textarea class="editor-input" id="cfg-options" rows="5" placeholder="Tùy chọn 1&#10;Tùy chọn 2&#10;Tùy chọn 3">${(e.options||[]).join('\n')}</textarea>
+    </div>`;
+      break;
 
-  function buildConfigPanel(field, idx) {
-    const f = field;
-    const v = f.validate || {};
+    case 'dropdown_storeslist':
+      html += `
+    <div>
+      <label class="editor-label">Source type <span class="req">*</span></label>
+      <select class="editor-input" id="cfg-source">
+        <option value="">-- chọn --</option>
+        <option value="gdv" ${(e.source||'')==='gdv'?'selected':''}>GĐV (Giám đốc Vùng)</option>
+        <option value="qlkv" ${(e.source||'')==='qlkv'?'selected':''}>QLKV (Quản lý Khu vực)</option>
+        <option value="ch" ${(e.source||'')==='ch'?'selected':''}>CH (Cửa hàng)</option>
+      </select>
+    </div>
+    <div>
+      <label class="editor-label">Depends on (field ID)</label>
+      <input class="editor-input" id="cfg-depends-on" type="text" placeholder="vd: gdv (nếu cascade)" value="${e.depends_on||''}">
+    </div>`;
+      break;
 
-    let html = `<div style="display:flex;flex-direction:column;gap:12px">`;
+    case 'image':
+      html += `
+    <div>
+      <label class="editor-label">Min files</label>
+      <input class="editor-input" id="cfg-min-files" type="number" min="0" placeholder="1" value="${e.validate?.min_files ?? ''}">
+    </div>
+    <div>
+      <label class="editor-label">Max files</label>
+      <input class="editor-input" id="cfg-max-files" type="number" min="1" placeholder="5" value="${e.validate?.max_files ?? ''}">
+    </div>
+    <div class="full">
+      <label class="editor-label">Max dung lượng/ảnh (KB) — tự động resize</label>
+      <input class="editor-input" id="cfg-max-kb" type="number" min="50" placeholder="200" value="${e.validate?.max_kb ?? ''}">
+    </div>`;
+      break;
 
-    // Common: ID and Label
-    html += `
-      <div class="config-row">
-        <div>
-          <label class="config-label">Field ID</label>
-          <input class="config-input" value="${f.id}" onchange="updateField(${idx},'id',this.value)">
-        </div>
-        <div>
-          <label class="config-label">Label hiển thị</label>
-          <input class="config-input" value="${f.label || ''}" oninput="updateField(${idx},'label',this.value)">
-        </div>
-      </div>
-    `;
+    case 'date':
+      html += `
+    <div>
+      <label class="editor-label">Min date</label>
+      <input class="editor-input" id="cfg-min-date" type="date" value="${e.validate?.min_date||''}">
+    </div>
+    <div>
+      <label class="editor-label">Max date</label>
+      <input class="editor-input" id="cfg-max-date" type="date" value="${e.validate?.max_date||''}">
+    </div>
+    <div>
+      <label class="editor-label" style="cursor:pointer">
+        <input type="checkbox" id="cfg-no-past" ${e.validate?.no_past?'checked':''} style="margin-right:6px;accent-color:var(--primary)">
+        Không cho chọn ngày quá khứ
+      </label>
+    </div>
+    <div>
+      <label class="editor-label" style="cursor:pointer">
+        <input type="checkbox" id="cfg-no-future" ${e.validate?.no_future?'checked':''} style="margin-right:6px;accent-color:var(--primary)">
+        Không cho chọn ngày tương lai
+      </label>
+    </div>`;
+      break;
 
-    if (f.type === 'section') {
-      html += `</div>`;
-      return html;
-    }
+    case 'email':
+      html += `
+    <div class="full">
+      <label class="editor-label">Domain whitelist <small style="color:var(--gray-400)">(cách nhau bằng dấu phẩy, để trống = chấp nhận tất cả)</small></label>
+      <input class="editor-input" id="cfg-domain-whitelist" type="text" placeholder="gmail.com, company.com" value="${(e.domain_whitelist||[]).join(', ')}">
+    </div>`;
+      break;
 
-    // Required + Hint
-    html += `
-      <div class="config-row">
-        <div style="display:flex;align-items:center;gap:8px">
-          <label class="config-label" style="margin:0">Bắt buộc</label>
-          <label class="toggle">
-            <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateField(${idx},'required',this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div>
-          <label class="config-label">Hint (hướng dẫn)</label>
-          <input class="config-input" value="${f.hint || ''}" oninput="updateField(${idx},'hint',this.value)" placeholder="Gợi ý cho người dùng">
-        </div>
-      </div>
-    `;
-
-    // Type-specific config
-    switch (f.type) {
-      case 'text':
-      case 'textarea':
-        html += `
-          <div class="config-row">
-            <div>
-              <label class="config-label">Min length</label>
-              <input class="config-input" type="number" value="${v.min_length || ''}" onchange="updateValidate(${idx},'min_length',this.value)" placeholder="0">
-            </div>
-            <div>
-              <label class="config-label">Max length</label>
-              <input class="config-input" type="number" value="${v.max_length || ''}" onchange="updateValidate(${idx},'max_length',this.value)" placeholder="không giới hạn">
-            </div>
-          </div>
-          <div>
-            <label class="config-label">Regex pattern (tùy chọn)</label>
-            <input class="config-input" value="${v.regex || ''}" onchange="updateValidate(${idx},'regex',this.value)" placeholder="vd: ^[A-Za-z]+$">
-          </div>
-          <div>
-            <label class="config-label">Placeholder</label>
-            <input class="config-input" value="${f.placeholder || ''}" oninput="updateField(${idx},'placeholder',this.value)">
-          </div>
-        `;
-        break;
-
-      case 'number':
-        html += `
-          <div class="config-row">
-            <div>
-              <label class="config-label">Min</label>
-              <input class="config-input" type="number" value="${v.min !== undefined ? v.min : ''}" onchange="updateValidate(${idx},'min',this.value)">
-            </div>
-            <div>
-              <label class="config-label">Max</label>
-              <input class="config-input" type="number" value="${v.max !== undefined ? v.max : ''}" onchange="updateValidate(${idx},'max',this.value)">
-            </div>
-          </div>
-          <div class="config-row">
-            <div>
-              <label class="config-label">Warn nếu > (cảnh báo)</label>
-              <input class="config-input" type="number" value="${v.warn_above || ''}" onchange="updateValidate(${idx},'warn_above',this.value)" placeholder="không bắt buộc">
-            </div>
-            <div>
-              <label class="config-label">Đơn vị (unit)</label>
-              <select class="config-input" onchange="updateField(${idx},'unit',this.value)">
-                <option value="">—</option>
-                ${['cm','m','kg','%','VNĐ','cái','người'].map(u => `<option value="${u}" ${f.unit === u ? 'selected' : ''}>${u}</option>`).join('')}
-              </select>
-            </div>
-          </div>
-        `;
-        break;
-
-      case 'dropdown':
-        html += `
-          <div>
-            <label class="config-label">Nguồn dữ liệu</label>
-            <select class="config-input" onchange="updateField(${idx},'source',this.value);updateField(${idx},'options',[])">
-              <option value="" ${!f.source ? 'selected' : ''}>— Danh sách tĩnh (nhập tay) —</option>
-              <option value="storeslist_gdv" ${f.source==='storeslist_gdv' ? 'selected' : ''}>Storeslist: GĐV Miền Bắc</option>
-              <option value="storeslist_qlkv" ${f.source==='storeslist_qlkv' ? 'selected' : ''}>Storeslist: QLKV (lọc theo GĐV)</option>
-              <option value="storeslist_ch" ${f.source==='storeslist_ch' ? 'selected' : ''}>Storeslist: Cửa hàng (lọc theo QLKV)</option>
-            </select>
-          </div>
-          ${!f.source ? `
-          <div>
-            <label class="config-label">Danh sách options (mỗi dòng 1 mục)</label>
-            <textarea class="config-input" rows="4" oninput="updateOptionsFromText(${idx},this.value)"
-              placeholder="Option 1&#10;Option 2&#10;Option 3">${(f.options || []).map(o => typeof o === 'object' ? o.label : o).join('\n')}</textarea>
-          </div>
-          ` : `<div class="alert alert-info" style="font-size:0.82rem;padding:10px">
-            ✅ Dữ liệu sẽ được tải động từ Google Sheets Storeslist khi form chạy.
-            ${f.source === 'storeslist_qlkv' || f.source === 'storeslist_ch' ? '<br>⚠️ Cần thêm field <code>depends_on</code> (field GĐV/QLKV phía trên).' : ''}
-          </div>`}
-          ${f.source === 'storeslist_qlkv' ? `
-          <div>
-            <label class="config-label">Phụ thuộc field (depends_on)</label>
-            <input class="config-input" value="${f.depends_on || 'gdv'}" onchange="updateField(${idx},'depends_on',this.value)" placeholder="id của field GĐV">
-          </div>` : ''}
-          ${f.source === 'storeslist_ch' ? `
-          <div>
-            <label class="config-label">Phụ thuộc field (depends_on)</label>
-            <input class="config-input" value="${f.depends_on || 'qlkv'}" onchange="updateField(${idx},'depends_on',this.value)" placeholder="id của field QLKV">
-          </div>` : ''}
-        `;
-        break;
-
-      case 'image':
-        html += `
-          <div class="config-row">
-            <div>
-              <label class="config-label">Min files</label>
-              <input class="config-input" type="number" min="0" value="${v.min_files || 1}" onchange="updateValidate(${idx},'min_files',parseInt(this.value))">
-            </div>
-            <div>
-              <label class="config-label">Max files</label>
-              <input class="config-input" type="number" min="1" value="${v.max_files || 3}" onchange="updateValidate(${idx},'max_files',parseInt(this.value))">
-            </div>
-          </div>
-          <div class="config-row">
-            <div>
-              <label class="config-label">Max KB mỗi ảnh</label>
-              <input class="config-input" type="number" value="${v.max_kb || 200}" onchange="updateValidate(${idx},'max_kb',parseInt(this.value))">
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;padding-top:20px">
-              <label class="toggle">
-                <input type="checkbox" ${v.auto_resize ? 'checked' : ''} onchange="updateValidate(${idx},'auto_resize',this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-              <label class="config-label" style="margin:0">Tự nén ảnh</label>
-            </div>
-          </div>
-          <div>
-            <label class="config-label">Accept types</label>
-            <input class="config-input" value="${v.accept || 'image/*'}" onchange="updateValidate(${idx},'accept',this.value)" placeholder="image/*">
-          </div>
-        `;
-        break;
-
-      case 'date':
-        html += `
-          <div class="config-row">
-            <div style="display:flex;align-items:center;gap:8px;padding-top:20px">
-              <label class="toggle">
-                <input type="checkbox" ${v.no_past ? 'checked' : ''} onchange="updateValidate(${idx},'no_past',this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-              <label class="config-label" style="margin:0">Không quá khứ</label>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;padding-top:20px">
-              <label class="toggle">
-                <input type="checkbox" ${v.no_future ? 'checked' : ''} onchange="updateValidate(${idx},'no_future',this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-              <label class="config-label" style="margin:0">Không tương lai</label>
-            </div>
-          </div>
-          <div class="config-row">
-            <div>
-              <label class="config-label">Min date</label>
-              <input class="config-input" type="date" value="${v.min || ''}" onchange="updateValidate(${idx},'min',this.value)">
-            </div>
-            <div>
-              <label class="config-label">Max date</label>
-              <input class="config-input" type="date" value="${v.max || ''}" onchange="updateValidate(${idx},'max',this.value)">
-            </div>
-          </div>
-        `;
-        break;
-
-      case 'email':
-        html += `
-          <div>
-            <label class="config-label">Domain whitelist (cách nhau bằng dấu phẩy)</label>
-            <input class="config-input" value="${(v.domain_whitelist || []).join(',')}" 
-              onchange="updateValidate(${idx},'domain_whitelist',this.value.split(',').map(s=>s.trim()).filter(Boolean))"
-              placeholder="gmail.com, company.vn (để trống = chấp nhận tất cả)">
-          </div>
-        `;
-        break;
-    }
-
-    html += `</div>`;
-    return html;
-  }
-
-  // ── Field update helpers ──
-  function updateField(idx, key, value) {
-    if (fields[idx]) {
-      fields[idx][key] = value;
-      refreshPreview();
-      // Re-render only the header label
-      const item = document.querySelector(`[data-idx="${idx}"] .fi-label`);
-      if (item && key === 'label') item.textContent = value || '(chưa có tên)';
-    }
-  }
-
-  function updateValidate(idx, key, value) {
-    if (!fields[idx].validate) fields[idx].validate = {};
-    if (value === '' || value === null || value === undefined) {
-      delete fields[idx].validate[key];
-    } else {
-      fields[idx].validate[key] = value;
-    }
-    refreshPreview();
-  }
-
-  function updateOptionsFromText(idx, text) {
-    const opts = text.split('\n').map(s => s.trim()).filter(Boolean);
-    fields[idx].options = opts;
-    refreshPreview();
-  }
-
-  function removeField(idx) {
-    fields.splice(idx, 1);
-    renderFields();
-    refreshPreview();
-  }
-
-  function moveField(idx, dir) {
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= fields.length) return;
-    [fields[idx], fields[newIdx]] = [fields[newIdx], fields[idx]];
-    renderFields();
-    refreshPreview();
-  }
-
-  // ── Drag & Drop (palette → canvas) ──
-  function paletteDragStart(e, type) {
-    dragSrcType = type;
-    dragSrcIdx = null;
-    e.dataTransfer.effectAllowed = 'copy';
-  }
-
-  function canvasDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = dragSrcType ? 'copy' : 'move';
-    document.getElementById('empty-zone')?.classList.add('dragover');
-  }
-
-  function canvasDragLeave(e) {
-    document.getElementById('empty-zone')?.classList.remove('dragover');
-  }
-
-  function canvasDrop(e) {
-    e.preventDefault();
-    document.getElementById('empty-zone')?.classList.remove('dragover');
-    if (dragSrcType) {
-      addField(dragSrcType);
-      dragSrcType = null;
-    }
-  }
-
-  // ── Drag & Drop (reorder within list) ──
-  function fieldDragStart(e, idx) {
-    dragSrcIdx = idx;
-    dragSrcType = null;
-    e.dataTransfer.effectAllowed = 'move';
-    setTimeout(() => {
-      const el = document.querySelector(`[data-idx="${idx}"]`);
-      if (el) el.classList.add('dragging');
-    }, 0);
-  }
-
-  function fieldDragOver(e, idx) {
-    e.preventDefault();
-    if (dragSrcIdx === null || dragSrcIdx === idx) return;
-    dropTargetIdx = idx;
-    document.querySelectorAll('.field-item').forEach((el, i) => {
-      el.classList.toggle('drag-over', i === idx);
-    });
-  }
-
-  function fieldDrop(e, idx) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (dragSrcIdx !== null && dragSrcIdx !== idx) {
-      const moved = fields.splice(dragSrcIdx, 1)[0];
-      fields.splice(idx, 0, moved);
-      renderFields();
-      refreshPreview();
-    }
-    dragSrcIdx = null;
-    dropTargetIdx = null;
-  }
-
-  function fieldDragEnd() {
-    dragSrcIdx = null;
-    document.querySelectorAll('.field-item').forEach(el => {
-      el.classList.remove('dragging', 'drag-over');
-    });
-  }
-
-  // ── Build JSON config ──
-  function buildConfig() {
-    const id = document.getElementById('meta-id').value.trim();
-    const title = document.getElementById('meta-title').value.trim();
-    const subtitle = document.getElementById('meta-subtitle').value.trim();
-    const webhook = document.getElementById('meta-webhook').value.trim();
-    const enabled = document.getElementById('meta-enabled').value === 'true';
-
-    const cleanFields = fields.map(f => {
-      const cleaned = { id: f.id, type: f.type, label: f.label };
-      if (f.required) cleaned.required = true;
-      if (f.placeholder) cleaned.placeholder = f.placeholder;
-      if (f.hint) cleaned.hint = f.hint;
-      if (f.unit) cleaned.unit = f.unit;
-      if (f.source) cleaned.source = f.source;
-      if (f.depends_on) cleaned.depends_on = f.depends_on;
-      if (f.options && f.options.length) cleaned.options = f.options;
-      if (f.validate) {
-        const v = {};
-        for (const [k, val] of Object.entries(f.validate)) {
-          if (val !== '' && val !== null && val !== undefined) v[k] = val;
-        }
-        if (Object.keys(v).length) cleaned.validate = v;
-      }
-      return cleaned;
-    });
-
-    return { id, title, subtitle, enabled, webhook, fields: cleanFields };
-  }
-
-  function refreshPreview() {
-    updateJsonTab();
-    if (document.getElementById('tab-preview').style.display !== 'none') {
-      renderPreview();
-    }
-  }
-
-  function updateJsonTab() {
-    const cfg = buildConfig();
-    const jsonEl = document.getElementById('json-output');
-    if (jsonEl) jsonEl.textContent = JSON.stringify(cfg, null, 2);
-  }
-
-  function renderPreview() {
-    const cfg = buildConfig();
-    const container = document.getElementById('preview-container');
-    if (!container) return;
-
-    if (!cfg.fields.length) {
-      container.innerHTML = '<p class="text-muted text-center" style="padding:32px">Chưa có fields nào</p>';
-      return;
-    }
-
-    let html = '';
-    if (cfg.title) {
-      html += `<div style="margin-bottom:16px">
-        <div style="font-weight:700;font-size:1.1rem;color:var(--primary)">${cfg.title}</div>
-        ${cfg.subtitle ? `<div class="text-sm text-muted">${cfg.subtitle}</div>` : ''}
+    case 'phone_vn':
+      // No extra config needed
+      html += `<div class="full" style="padding:8px;background:var(--gray-50);border-radius:6px;font-size:0.85rem;color:var(--gray-500)">
+        ✅ Validate format: 09x / 08x / 03x / 07x (10 chữ số)
       </div>`;
-    }
-
-    for (const f of cfg.fields) {
-      if (f.type === 'section') {
-        html += `<h3 style="color:var(--primary);font-size:1rem;margin:20px 0 4px;border-bottom:2px solid var(--primary-light);padding-bottom:6px">${f.label}</h3>`;
-        continue;
-      }
-      const req = f.required ? '<span style="color:var(--danger);margin-left:3px">*</span>' : '';
-      html += `<div class="field-group">
-        <label class="field-label">${f.label}${req}</label>`;
-
-      switch(f.type) {
-        case 'text': html += `<input type="text" placeholder="${f.placeholder || ''}" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
-        case 'textarea': html += `<textarea rows="3" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled></textarea>`; break;
-        case 'number':
-          html += `<div style="display:flex">
-            <input type="number" style="flex:1;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px 0 0 8px;font-size:1rem" disabled>
-            ${f.unit ? `<div style="background:var(--gray-100);border:1.5px solid var(--gray-200);border-left:none;border-radius:0 8px 8px 0;padding:10px 14px;display:flex;align-items:center;font-size:0.9rem">${f.unit}</div>` : ''}
-          </div>`; break;
-        case 'dropdown':
-          html += `<select style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem;background:white" disabled>
-            <option>— Chọn ${f.label} —</option>
-            ${f.source ? `<option>(Dữ liệu động từ ${f.source})</option>` : (f.options || []).map(o => `<option>${o}</option>`).join('')}
-          </select>`; break;
-        case 'date': html += `<input type="date" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
-        case 'phone': html += `<input type="tel" placeholder="09x/08x/03x/07x" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
-        case 'email': html += `<input type="email" placeholder="email@domain.com" style="width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:1rem" disabled>`; break;
-        case 'image': html += `<div style="border:2px dashed var(--gray-200);border-radius:8px;padding:24px;text-align:center;color:var(--gray-400)">📷 Chọn ảnh (${f.validate?.min_files||1}–${f.validate?.max_files||3} ảnh, max ${f.validate?.max_kb||200}KB)</div>`; break;
-      }
-      if (f.hint) html += `<div class="field-hint">${f.hint}</div>`;
-      html += `</div>`;
-    }
-
-    html += `<button class="btn btn-primary btn-block" disabled style="margin-top:16px">📤 Gửi dữ liệu</button>`;
-    container.innerHTML = html;
+      break;
   }
 
-  // ── Tabs ──
-  function switchTab(tab, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    ['builder','preview','json'].forEach(t => {
-      document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
-    });
-    if (tab === 'preview') renderPreview();
-    if (tab === 'json') updateJsonTab();
-  }
+  // Required checkbox (all types)
+  html += `
+    <div class="full">
+      <label class="editor-label" style="cursor:pointer;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="cfg-required" ${e.required!==false?'checked':''} style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer">
+        <span>Bắt buộc nhập (required)</span>
+      </label>
+    </div>`;
 
-  // ── JSON output ──
-  function showJsonOutput() {
-    switchTab('json', document.querySelectorAll('.tab-btn')[2]);
-    updateJsonTab();
-  }
+  html += '</div>'; // end config-grid
+  container.innerHTML = html;
 
-  function copyJson() {
-    const text = document.getElementById('json-output').textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('✅ Đã copy JSON!', 'success');
+  // Unit custom handler
+  const unitSel = document.getElementById('cfg-unit');
+  if (unitSel) {
+    unitSel.addEventListener('change', () => {
+      const wrap = document.getElementById('custom-unit-wrap');
+      if (wrap) wrap.style.display = unitSel.value === '__custom__' ? '' : 'none';
     });
   }
+}
 
-  function downloadJson() {
-    const cfg = buildConfig();
-    const id = cfg.id || 'form';
-    const text = JSON.stringify(cfg, null, 2);
-    const blob = new Blob([text], { type:'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `${id}-config.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+function collectFieldConfig() {
+  const id = document.getElementById('cfg-id')?.value.trim();
+  const label = document.getElementById('cfg-label')?.value.trim();
+  const required = document.getElementById('cfg-required')?.checked ?? true;
 
-  function clearAll() {
-    if (!fields.length || confirm('Xóa tất cả fields?')) {
-      fields = [];
-      renderFields();
-      refreshPreview();
+  if (!id || !label) { showNotif('Vui lòng nhập Field ID và Label', 'error'); return null; }
+  if (!/^[a-z0-9_-]+$/.test(id)) { showNotif('Field ID chỉ dùng chữ thường, số, _ -', 'error'); return null; }
+
+  const field = { id, type: selectedType, label, required };
+
+  switch(selectedType) {
+    case 'text':
+    case 'textarea': {
+      const minLen = document.getElementById('cfg-min-len')?.value;
+      const maxLen = document.getElementById('cfg-max-len')?.value;
+      const placeholder = document.getElementById('cfg-placeholder')?.value;
+      if (placeholder) field.placeholder = placeholder;
+      const validate = {};
+      if (minLen) validate.min_length = parseInt(minLen);
+      if (maxLen) validate.max_length = parseInt(maxLen);
+      if (Object.keys(validate).length) field.validate = validate;
+      break;
     }
-  }
-
-  // ── Load sample config (mat-tien) ──
-  function loadSampleConfig() {
-    if (fields.length && !confirm('Load mẫu sẽ xóa fields hiện tại. Tiếp tục?')) return;
-
-    document.getElementById('meta-id').value = 'mat-tien';
-    document.getElementById('meta-title').value = 'Thống kê kích thước mặt tiền';
-    document.getElementById('meta-subtitle').value = 'Đo kích thước Block mặt kính để dán POSM';
-    document.getElementById('meta-webhook').value = 'https://script.google.com/macros/s/AKfycby_LLllWe8zOTbt1Wtqp9NVQPlmXlE60DOUnqo_7-w6d6S18VDNrBJ6Iksp8z-eIv8tWg/exec';
-    document.getElementById('meta-enabled').value = 'true';
-
-    fields = [
-      { id:'gdv', type:'dropdown', label:'Giám đốc Vùng (GĐV)', required:true, source:'storeslist_gdv' },
-      { id:'qlkv', type:'dropdown', label:'QLKV phụ trách', required:true, source:'storeslist_qlkv', depends_on:'gdv' },
-      { id:'ch', type:'dropdown', label:'Cửa hàng', required:true, source:'storeslist_ch', depends_on:'qlkv' },
-      { id:'kv1', type:'number', label:'Mặt kính KV CHT', required:true, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
-      { id:'kv2', type:'number', label:'Cửa kính ra vào', required:true, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
-      { id:'kv3', type:'number', label:'Mặt kính còn lại 01', required:false, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
-      { id:'kv4', type:'number', label:'Mặt kính còn lại 02 (Lô góc)', required:false, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
-      { id:'kv5', type:'number', label:'Mặt kính còn lại 03 (Lô góc)', required:false, unit:'cm', validate:{min:1,max:9999,warn_above:400} },
-      { id:'photos', type:'image', label:'Ảnh mặt tiền', required:true, validate:{min_files:1,max_files:3,max_kb:200,auto_resize:true} }
-    ];
-
-    renderFields();
-    refreshPreview();
-    showToast('✅ Đã load config mẫu mat-tien!', 'success');
-  }
-
-  function showToast(msg, type = '') {
-    let toast = document.getElementById('rf-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'rf-toast';
-      toast.className = 'toast';
-      document.body.appendChild(toast);
+    case 'number': {
+      const min = document.getElementById('cfg-num-min')?.value;
+      const max = document.getElementById('cfg-num-max')?.value;
+      const warnAbove = document.getElementById('cfg-warn-above')?.value;
+      let unit = document.getElementById('cfg-unit')?.value;
+      if (unit === '__custom__') unit = document.getElementById('cfg-unit-custom')?.value.trim() || '';
+      if (unit) field.unit = unit;
+      const validate = {};
+      if (min !== '') validate.min = parseFloat(min);
+      if (max !== '') validate.max = parseFloat(max);
+      if (warnAbove !== '') validate.warn_above = parseFloat(warnAbove);
+      if (Object.keys(validate).length) field.validate = validate;
+      break;
     }
-    toast.textContent = msg;
-    toast.className = `toast ${type}`;
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => toast.classList.remove('show'), 3000);
+    case 'dropdown_static': {
+      const rawOptions = document.getElementById('cfg-options')?.value || '';
+      field.options = rawOptions.split('\n').map(s=>s.trim()).filter(Boolean);
+      break;
+    }
+    case 'dropdown_storeslist': {
+      const source = document.getElementById('cfg-source')?.value;
+      if (!source) { showNotif('Chọn source type (gdv/qlkv/ch)', 'error'); return null; }
+      field.source = source;
+      const dependsOn = document.getElementById('cfg-depends-on')?.value.trim();
+      if (dependsOn) field.depends_on = dependsOn;
+      break;
+    }
+    case 'image': {
+      const minFiles = document.getElementById('cfg-min-files')?.value;
+      const maxFiles = document.getElementById('cfg-max-files')?.value;
+      const maxKb = document.getElementById('cfg-max-kb')?.value;
+      const validate = {};
+      if (minFiles) validate.min_files = parseInt(minFiles);
+      if (maxFiles) validate.max_files = parseInt(maxFiles);
+      if (maxKb) validate.max_kb = parseInt(maxKb);
+      if (Object.keys(validate).length) field.validate = validate;
+      break;
+    }
+    case 'date': {
+      const minDate = document.getElementById('cfg-min-date')?.value;
+      const maxDate = document.getElementById('cfg-max-date')?.value;
+      const noPast = document.getElementById('cfg-no-past')?.checked;
+      const noFuture = document.getElementById('cfg-no-future')?.checked;
+      const validate = {};
+      if (minDate) validate.min_date = minDate;
+      if (maxDate) validate.max_date = maxDate;
+      if (noPast) validate.no_past = true;
+      if (noFuture) validate.no_future = true;
+      if (Object.keys(validate).length) field.validate = validate;
+      break;
+    }
+    case 'email': {
+      const raw = document.getElementById('cfg-domain-whitelist')?.value || '';
+      const domains = raw.split(',').map(s=>s.trim()).filter(Boolean);
+      if (domains.length) field.domain_whitelist = domains;
+      break;
+    }
+    case 'phone_vn':
+      break;
   }
 
-  // ── Init ──
-  renderFields();
-  refreshPreview();
+  return field;
+}
+
+function confirmAddField() {
+  const field = collectFieldConfig();
+  if (!field) return;
+
+  const section = sections.find(s => s.id === addingToSectionId);
+  if (!section) return;
+
+  // Check if editing existing
+  if (editingField) {
+    const idx = section.fields.findIndex(f => f.id === editingField.fieldId);
+    if (idx >= 0) {
+      section.fields[idx] = field;
+    }
+  } else {
+    // Check duplicate ID in section
+    if (section.fields.some(f => f.id === field.id)) {
+      showNotif('Field ID đã tồn tại trong section này', 'error'); return;
+    }
+    section.fields.push(field);
+  }
+
+  closeModal();
+  renderSections();
+  updatePreview();
+  showNotif(editingField ? '✅ Đã cập nhật field' : '✅ Đã thêm field', 'success');
+  editingField = null;
+}
+
+function deleteField(sectionId, fieldId) {
+  const section = sections.find(s => s.id === sectionId);
+  if (!section) return;
+  section.fields = section.fields.filter(f => f.id !== fieldId);
+  renderSections();
+  updatePreview();
+}
+
+function moveField(sectionId, fieldId, dir) {
+  const section = sections.find(s => s.id === sectionId);
+  if (!section) return;
+  const idx = section.fields.findIndex(f => f.id === fieldId);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= section.fields.length) return;
+  const tmp = section.fields[idx];
+  section.fields[idx] = section.fields[newIdx];
+  section.fields[newIdx] = tmp;
+  renderSections();
+  updatePreview();
+}
+
+function openEditField(sectionId, fieldId) {
+  const section = sections.find(s => s.id === sectionId);
+  if (!section) return;
+  const field = section.fields.find(f => f.id === fieldId);
+  if (!field) return;
+
+  addingToSectionId = sectionId;
+  editingField = { sectionId, fieldId };
+  selectedType = field.type;
+
+  document.querySelector('#modal-add-field .modal-header h3').textContent = '✏️ Chỉnh sửa Field';
+  document.getElementById('btn-confirm-add').textContent = '✓ Lưu thay đổi';
+  document.getElementById('btn-confirm-add').disabled = false;
+
+  renderTypeGrid();
+  renderConfigForm(field.type, field);
+  document.getElementById('modal-add-field').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal-add-field').classList.add('hidden');
+  selectedType = null;
+  editingField = null;
+}
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function renderSections() {
+  const container = document.getElementById('sections-container');
+
+  if (sections.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--gray-400)">
+      <div style="font-size:2.5rem;margin-bottom:8px">📋</div>
+      <p>Chưa có section nào. Nhấn "Thêm Section" để bắt đầu.</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = sections.map((section, sIdx) => `
+    <div class="section-card" id="sec-${section.id}">
+      <div class="section-header">
+        <input class="section-title-input" type="text" value="${escHtml(section.title)}"
+          oninput="updateSectionTitle('${section.id}', this.value)" placeholder="Tên section...">
+        <span class="section-id-badge">${escHtml(section.id)}</span>
+        <button class="btn btn-icon" style="background:rgba(255,255,255,0.15);border:none;color:white;cursor:pointer;border-radius:6px"
+          title="Xóa section" onclick="deleteSection('${section.id}')">🗑️</button>
+      </div>
+      <div class="section-body">
+        ${section.fields.length === 0
+          ? `<div class="empty-fields">Chưa có field nào trong section này</div>`
+          : section.fields.map((field, fIdx) => renderFieldCard(section, field, fIdx)).join('')
+        }
+        <div class="add-field-zone">
+          <button class="btn btn-secondary btn-sm" onclick="openAddFieldModal('${section.id}')">
+            ＋ Thêm field
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFieldCard(section, field, idx) {
+  const ft = FIELD_TYPES.find(t => t.type === field.type);
+  const icon = ft?.icon || '📌';
+  const subtitle = getFieldSubtitle(field);
+  const isFirst = idx === 0;
+  const isLast = idx === section.fields.length - 1;
+
+  return `
+    <div class="field-card" id="fc-${section.id}-${field.id}" onclick="openEditField('${section.id}','${field.id}')">
+      <span class="field-type-badge">${icon} ${field.type}</span>
+      <div class="field-info">
+        <div class="field-label">${escHtml(field.label)}${field.required ? ' <span style="color:var(--danger)">*</span>' : ''}</div>
+        <div class="field-sub">${subtitle}</div>
+      </div>
+      <div class="field-actions" onclick="event.stopPropagation()">
+        <button class="btn-move" title="Lên" onclick="moveField('${section.id}','${field.id}',-1)" ${isFirst?'disabled':''}>↑</button>
+        <button class="btn-move" title="Xuống" onclick="moveField('${section.id}','${field.id}',1)" ${isLast?'disabled':''}>↓</button>
+        <button class="btn-delete" title="Xóa field" onclick="deleteField('${section.id}','${field.id}')">✕</button>
+      </div>
+    </div>
+  `;
+}
+
+function getFieldSubtitle(field) {
+  switch(field.type) {
+    case 'number': {
+      const parts = [];
+      if (field.unit) parts.push(`Đơn vị: ${field.unit}`);
+      if (field.validate?.min !== undefined) parts.push(`min: ${field.validate.min}`);
+      if (field.validate?.max !== undefined) parts.push(`max: ${field.validate.max}`);
+      if (field.validate?.warn_above !== undefined) parts.push(`⚠️ warn > ${field.validate.warn_above}`);
+      return parts.join(' · ') || 'Số';
+    }
+    case 'dropdown_static':
+      return `${(field.options||[]).length} options`;
+    case 'dropdown_storeslist':
+      return `source: ${field.source||'?'}${field.depends_on ? ` → depends_on: ${field.depends_on}` : ''}`;
+    case 'image': {
+      const v = field.validate || {};
+      const parts = [];
+      if (v.min_files) parts.push(`min: ${v.min_files}`);
+      if (v.max_files) parts.push(`max: ${v.max_files}`);
+      if (v.max_kb) parts.push(`≤${v.max_kb}KB`);
+      return parts.join(', ') || 'Upload ảnh';
+    }
+    case 'date': {
+      const v = field.validate || {};
+      const parts = [];
+      if (v.no_past) parts.push('Không quá khứ');
+      if (v.no_future) parts.push('Không tương lai');
+      if (v.min_date) parts.push(`từ ${v.min_date}`);
+      if (v.max_date) parts.push(`đến ${v.max_date}`);
+      return parts.join(' · ') || 'Chọn ngày';
+    }
+    case 'text':
+    case 'textarea':
+      return field.placeholder || (field.validate ? JSON.stringify(field.validate) : '');
+    case 'email':
+      return field.domain_whitelist?.length ? `@${field.domain_whitelist.join(', @')}` : 'Mọi domain';
+    case 'phone_vn':
+      return '09x / 08x / 03x / 07x';
+    default:
+      return '';
+  }
+}
+
+// ═══════════════════════════════════════════
+// JSON / PREVIEW
+// ═══════════════════════════════════════════
+function buildJSON() {
+  const id = document.getElementById('meta-id').value.trim();
+  const title = document.getElementById('meta-title').value.trim();
+  const subtitle = document.getElementById('meta-subtitle').value.trim();
+  const webhook = document.getElementById('meta-webhook').value.trim();
+  const active = document.getElementById('meta-active').checked;
+  const validFrom = document.getElementById('meta-valid-from').value || null;
+  const validTo = document.getElementById('meta-valid-to').value || null;
+
+  return {
+    id: id || 'untitled',
+    title: title || 'Untitled Form',
+    subtitle: subtitle || undefined,
+    webhook: webhook || undefined,
+    active,
+    valid_from: validFrom,
+    valid_to: validTo,
+    sections: sections.map(s => ({
+      id: s.id,
+      title: s.title,
+      fields: s.fields
+    }))
+  };
+}
+
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+      let cls = 'num';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'key' : 'str';
+      } else if (/true|false/.test(match)) {
+        cls = 'bool';
+      } else if (/null/.test(match)) {
+        cls = 'null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    });
+}
+
+function updatePreview() {
+  // Update title display
+  const title = document.getElementById('meta-title').value.trim();
+  document.getElementById('form-title-display').textContent = title || 'Chưa có tên form';
+
+  // Update active label
+  const active = document.getElementById('meta-active').checked;
+  document.getElementById('active-label').textContent = active ? 'Bật' : 'Tắt';
+
+  // Update JSON preview if tab visible
+  const jsonStr = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
+  const display = document.getElementById('json-display');
+  display.innerHTML = syntaxHighlight(jsonStr);
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'preview') updatePreview();
+}
+
+// ═══════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════
+function copyJSON() {
+  const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
+  navigator.clipboard.writeText(json).then(() => showNotif('✅ Đã copy JSON!', 'success'))
+    .catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = json;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showNotif('✅ Đã copy JSON!', 'success');
+    });
+}
+
+function downloadJSON() {
+  const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
+  const id = document.getElementById('meta-id').value.trim() || 'form';
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${id}-config.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showNotif('⬇️ Đang tải config.json...', 'success');
+}
+
+// ═══════════════════════════════════════════
+// SAMPLE DATA
+// ═══════════════════════════════════════════
+function openLoadSample() {
+  if (sections.length > 0 || document.getElementById('meta-id').value) {
+    if (!confirm('Load mẫu sẽ XÓA dữ liệu hiện tại. Tiếp tục?')) return;
+  }
+  loadSample();
+}
+
+function loadSample() {
+  // Metadata
+  document.getElementById('meta-id').value = 'mat-tien';
+  document.getElementById('meta-title').value = 'Thống kê kích thước mặt tiền';
+  document.getElementById('meta-subtitle').value = 'Đo kích thước Block mặt kính để dán POSM';
+  document.getElementById('meta-webhook').value = 'https://script.google.com/macros/s/AKfycby_LLllWe8zOTbt1Wtqp9NVQPlmXlE60DOUnqo_7-w6d6S18VDNrBJ6Iksp8z-eIv8tWg/exec';
+  document.getElementById('meta-active').checked = true;
+  document.getElementById('meta-valid-from').value = '2026-06-10';
+  document.getElementById('meta-valid-to').value = '';
+
+  // Reset sections
+  sections = [];
+  sectionCounter = 0;
+
+  // Section 1: Thông tin cửa hàng
+  addSection({
+    id: 's1',
+    title: 'Thông tin cửa hàng',
+    fields: [
+      { id: 'gdv', type: 'dropdown_storeslist', label: 'Giám đốc Vùng (GĐV)', source: 'gdv', required: true },
+      { id: 'qlkv', type: 'dropdown_storeslist', label: 'QLKV phụ trách', source: 'qlkv', depends_on: 'gdv', required: true },
+      { id: 'ch', type: 'dropdown_storeslist', label: 'Cửa hàng', source: 'ch', depends_on: 'qlkv', required: true },
+    ]
+  });
+
+  // Section 2: Kích thước mặt tiền
+  addSection({
+    id: 's2',
+    title: 'Kích thước mặt tiền',
+    fields: [
+      { id: 'kv1', type: 'number', label: 'Mặt kính KV CHT', unit: 'cm', required: true, validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv2', type: 'number', label: 'Cửa kính ra vào', unit: 'cm', required: true, validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv3', type: 'number', label: 'Mặt kính còn lại 01', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv4', type: 'number', label: 'Mặt kính còn lại 02 (Lô góc)', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv5', type: 'number', label: 'Mặt kính còn lại 03 (Lô góc)', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
+    ]
+  });
+
+  // Section 3: Hình ảnh
+  addSection({
+    id: 's3',
+    title: 'Hình ảnh',
+    fields: [
+      { id: 'photos', type: 'image', label: 'Ảnh mặt tiền', required: true, validate: { min_files: 1, max_files: 3, max_kb: 200 } },
+    ]
+  });
+
+  renderSections();
+  updatePreview();
+  showNotif('✅ Đã load mẫu mat-tien!', 'success');
+}
+
+function clearAll() {
+  if (!confirm('Xóa tất cả dữ liệu?')) return;
+  sections = [];
+  sectionCounter = 0;
+  document.getElementById('meta-id').value = '';
+  document.getElementById('meta-title').value = '';
+  document.getElementById('meta-subtitle').value = '';
+  document.getElementById('meta-webhook').value = '';
+  document.getElementById('meta-valid-from').value = '';
+  document.getElementById('meta-valid-to').value = '';
+  document.getElementById('meta-active').checked = true;
+  renderSections();
+  updatePreview();
+  showNotif('🗑️ Đã xóa tất cả', 'success');
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function showNotif(msg, type='') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'notif' + (type ? ' ' + type : '');
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 2800);
+}
+
+// ═══════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    const modal = document.getElementById('modal-add-field');
+    if (!modal.classList.contains('hidden')) confirmAddField();
+  }
+});
+
+// Click outside modal closes it
+document.getElementById('modal-add-field').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-add-field')) closeModal();
+});
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+renderSections();
+updatePreview();
 </script>
 </body>
 </html>
