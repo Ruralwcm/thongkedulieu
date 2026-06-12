@@ -431,7 +431,7 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
   width: 100%;
-  max-width: 540px;
+  max-width: 620px; /* tăng từ 540 → 620 */
   max-height: 90vh;
   overflow-y: auto;
   animation: modalIn 0.18s ease;
@@ -464,26 +464,61 @@
   justify-content: flex-end;
 }
 
-/* Field type picker */
+/* ── Field type picker — Google Forms style ── */
+.field-type-group {
+  margin-bottom: 18px;
+}
+.field-type-group-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gray-500);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--gray-100);
+}
 .type-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 .type-card {
-  padding: 12px 8px;
+  padding: 14px 8px 12px;
   border: 2px solid var(--gray-200);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.18s ease;
   background: white;
+  position: relative;
+  user-select: none;
 }
-.type-card:hover { border-color: var(--primary-mid); background: var(--primary-light); }
-.type-card.selected { border-color: var(--primary); background: var(--primary-light); }
-.type-card .type-icon { font-size: 1.5rem; margin-bottom: 4px; }
-.type-card .type-name { font-size: 0.78rem; font-weight: 700; color: var(--gray-700); }
-.type-card .type-desc { font-size: 0.7rem; color: var(--gray-500); margin-top: 2px; }
+.type-card:hover {
+  border-color: var(--primary-mid);
+  background: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45,106,191,0.15);
+}
+.type-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(45,106,191,0.15);
+  transform: translateY(-1px);
+}
+.type-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 6px;
+  right: 9px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+}
+.type-card .type-icon { font-size: 2rem; margin-bottom: 6px; line-height: 1; }
+.type-card .type-name { font-size: 0.85rem; font-weight: 700; color: var(--gray-700); }
+.type-card .type-desc { font-size: 0.7rem; color: var(--gray-500); margin-top: 3px; }
 
 /* Config form in modal */
 .config-form { margin-top: 16px; border-top: 1px solid var(--gray-100); padding-top: 14px; }
@@ -683,8 +718,7 @@
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:0.85rem;color:var(--gray-500);margin-bottom:12px">Chọn loại field:</p>
-      <div class="type-grid" id="type-grid"></div>
+      <div id="type-grid-container"></div>
       <div class="config-form" id="modal-config-form" style="display:none"></div>
     </div>
     <div class="modal-footer">
@@ -711,15 +745,27 @@ let sectionCounter = 0;
 // FIELD TYPE DEFINITIONS
 // ═══════════════════════════════════════════
 const FIELD_TYPES = [
-  { type: 'text', icon: '📝', name: 'Text', desc: 'Nhập văn bản' },
-  { type: 'number', icon: '🔢', name: 'Number', desc: 'Số / đơn vị' },
-  { type: 'dropdown_static', icon: '📋', name: 'Dropdown', desc: 'Danh sách tĩnh' },
+  { type: 'text',                icon: '📝', name: 'Text',        desc: 'Nhập văn bản' },
+  { type: 'number',              icon: '🔢', name: 'Number',      desc: 'Số / đơn vị' },
+  { type: 'textarea',            icon: '📄', name: 'Textarea',    desc: 'Văn bản dài' },
+  { type: 'phone_vn',            icon: '📱', name: 'Phone VN',    desc: '09x/08x/03x' },
+  { type: 'email',               icon: '✉️', name: 'Email',       desc: 'Địa chỉ email' },
+  { type: 'dropdown_static',     icon: '📋', name: 'Dropdown',    desc: 'Danh sách tĩnh' },
   { type: 'dropdown_storeslist', icon: '🏪', name: 'Stores List', desc: 'GĐV/QLKV/CH' },
-  { type: 'image', icon: '📷', name: 'Image', desc: 'Upload ảnh' },
-  { type: 'date', icon: '📅', name: 'Date', desc: 'Chọn ngày' },
-  { type: 'textarea', icon: '📄', name: 'Textarea', desc: 'Văn bản dài' },
-  { type: 'phone_vn', icon: '📱', name: 'Phone VN', desc: '09x/08x/03x' },
-  { type: 'email', icon: '✉️', name: 'Email', desc: 'Địa chỉ email' },
+  { type: 'image',               icon: '📷', name: 'Image',       desc: 'Upload ảnh' },
+  { type: 'date',                icon: '📅', name: 'Date',        desc: 'Chọn ngày' },
+];
+
+// Nhóm field theo loại — giống Google Forms
+const FIELD_TYPE_GROUPS = [
+  {
+    label: '📝 Văn bản & Số',
+    types: ['text', 'number', 'textarea', 'phone_vn', 'email']
+  },
+  {
+    label: '📋 Lựa chọn & Đặc biệt',
+    types: ['dropdown_static', 'dropdown_storeslist', 'image', 'date']
+  }
 ];
 
 // ═══════════════════════════════════════════
@@ -759,18 +805,28 @@ function openAddFieldModal(sectionId) {
   document.getElementById('btn-confirm-add').disabled = true;
   renderTypeGrid();
   document.getElementById('modal-add-field').classList.remove('hidden');
-  // Reset header
   document.querySelector('#modal-add-field .modal-header h3').textContent = '➕ Thêm Field mới';
   document.getElementById('btn-confirm-add').textContent = '✓ Thêm field';
 }
 
 function renderTypeGrid() {
-  const grid = document.getElementById('type-grid');
-  grid.innerHTML = FIELD_TYPES.map(ft => `
-    <div class="type-card ${selectedType === ft.type ? 'selected' : ''}" onclick="selectType('${ft.type}')">
-      <div class="type-icon">${ft.icon}</div>
-      <div class="type-name">${ft.name}</div>
-      <div class="type-desc">${ft.desc}</div>
+  const container = document.getElementById('type-grid-container');
+  container.innerHTML = FIELD_TYPE_GROUPS.map(group => `
+    <div class="field-type-group">
+      <div class="field-type-group-label">${group.label}</div>
+      <div class="type-grid">
+        ${group.types.map(typeId => {
+          const ft = FIELD_TYPES.find(t => t.type === typeId);
+          if (!ft) return '';
+          return `
+            <div class="type-card ${selectedType === ft.type ? 'selected' : ''}" onclick="selectType('${ft.type}')">
+              <div class="type-icon">${ft.icon}</div>
+              <div class="type-name">${ft.name}</div>
+              <div class="type-desc">${ft.desc}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     </div>
   `).join('');
 }
@@ -797,7 +853,6 @@ function renderConfigForm(type, existing) {
       <input class="editor-input" id="cfg-label" type="text" placeholder="vd: Mặt kính KV CHT" value="${e.label||''}">
     </div>`;
 
-  // Type-specific fields
   switch(type) {
     case 'text':
       html += `
@@ -933,14 +988,12 @@ function renderConfigForm(type, existing) {
       break;
 
     case 'phone_vn':
-      // No extra config needed
       html += `<div class="full" style="padding:8px;background:var(--gray-50);border-radius:6px;font-size:0.85rem;color:var(--gray-500)">
         ✅ Validate format: 09x / 08x / 03x / 07x (10 chữ số)
       </div>`;
       break;
   }
 
-  // Required checkbox (all types)
   html += `
     <div class="full">
       <label class="editor-label" style="cursor:pointer;display:flex;align-items:center;gap:8px">
@@ -949,10 +1002,9 @@ function renderConfigForm(type, existing) {
       </label>
     </div>`;
 
-  html += '</div>'; // end config-grid
+  html += '</div>';
   container.innerHTML = html;
 
-  // Unit custom handler
   const unitSel = document.getElementById('cfg-unit');
   if (unitSel) {
     unitSel.addEventListener('change', () => {
@@ -1056,14 +1108,10 @@ function confirmAddField() {
   const section = sections.find(s => s.id === addingToSectionId);
   if (!section) return;
 
-  // Check if editing existing
   if (editingField) {
     const idx = section.fields.findIndex(f => f.id === editingField.fieldId);
-    if (idx >= 0) {
-      section.fields[idx] = field;
-    }
+    if (idx >= 0) section.fields[idx] = field;
   } else {
-    // Check duplicate ID in section
     if (section.fields.some(f => f.id === field.id)) {
       showNotif('Field ID đã tồn tại trong section này', 'error'); return;
     }
@@ -1259,7 +1307,7 @@ function buildJSON() {
 function syntaxHighlight(json) {
   return json
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+    .replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
       let cls = 'num';
       if (/^"/.test(match)) {
         cls = /:$/.test(match) ? 'key' : 'str';
@@ -1273,15 +1321,12 @@ function syntaxHighlight(json) {
 }
 
 function updatePreview() {
-  // Update title display
   const title = document.getElementById('meta-title').value.trim();
   document.getElementById('form-title-display').textContent = title || 'Chưa có tên form';
 
-  // Update active label
   const active = document.getElementById('meta-active').checked;
   document.getElementById('active-label').textContent = active ? 'Bật' : 'Tắt';
 
-  // Update JSON preview if tab visible
   const jsonStr = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
   const display = document.getElementById('json-display');
   display.innerHTML = syntaxHighlight(jsonStr);
@@ -1302,7 +1347,6 @@ function copyJSON() {
   const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
   navigator.clipboard.writeText(json).then(() => showNotif('✅ Đã copy JSON!', 'success'))
     .catch(() => {
-      // Fallback
       const ta = document.createElement('textarea');
       ta.value = json;
       document.body.appendChild(ta);
@@ -1336,7 +1380,6 @@ function openLoadSample() {
 }
 
 function loadSample() {
-  // Metadata
   document.getElementById('meta-id').value = 'mat-tien';
   document.getElementById('meta-title').value = 'Thống kê kích thước mặt tiền';
   document.getElementById('meta-subtitle').value = 'Đo kích thước Block mặt kính để dán POSM';
@@ -1345,11 +1388,9 @@ function loadSample() {
   document.getElementById('meta-valid-from').value = '2026-06-10';
   document.getElementById('meta-valid-to').value = '';
 
-  // Reset sections
   sections = [];
   sectionCounter = 0;
 
-  // Section 1: Thông tin cửa hàng
   addSection({
     id: 's1',
     title: 'Thông tin cửa hàng',
@@ -1360,7 +1401,6 @@ function loadSample() {
     ]
   });
 
-  // Section 2: Kích thước mặt tiền
   addSection({
     id: 's2',
     title: 'Kích thước mặt tiền',
@@ -1373,7 +1413,6 @@ function loadSample() {
     ]
   });
 
-  // Section 3: Hình ảnh
   addSection({
     id: 's3',
     title: 'Hình ảnh',
@@ -1434,7 +1473,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Click outside modal closes it
 document.getElementById('modal-add-field').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-add-field')) closeModal();
 });
