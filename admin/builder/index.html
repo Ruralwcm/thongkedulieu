@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v3.8 — RuralForms Admin</title>
+<title>Form Builder v3.9 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -940,6 +940,28 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 .pub-step.done .step-icon::after { content: ' ✅'; }
 .pub-step.error { color: var(--danger); }
 
+/* ── Field image wrap ── */
+.field-img-wrap {
+  position: relative;
+  padding: 8px 20px 0;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+/* ── Form header image upload ── */
+.form-img-upload {
+  border: 2px dashed var(--gray-300);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 12px;
+}
+.form-img-upload:hover { border-color: var(--primary-mid); background: var(--primary-light); }
+.form-img-upload img { max-width: 100%; max-height: 80px; object-fit: cover; border-radius: 4px; display: block; margin: 0 auto 6px; }
+.form-img-upload .upload-hint { font-size: 0.78rem; color: var(--gray-500); }
+
 /* ── Top mode buttons (Edit/Preview/Load/Publish) ── */
 .top-mode-btn {
   padding: 6px 14px;
@@ -1162,7 +1184,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v3.8</span>
+    <span class="badge">Form Builder v3.9</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1179,6 +1201,20 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
       <h2>⚙️ Cấu hình form</h2>
     </div>
     <div class="sidebar-body">
+
+      <!-- Form cover image -->
+      <div class="form-group">
+        <label>Ảnh bìa form</label>
+        <div class="form-img-upload" id="form-img-wrap" onclick="document.getElementById('form-img-input').click()" title="Click để chọn ảnh bìa">
+          <div id="form-img-preview" style="display:none">
+            <img id="form-img-el" src="" alt="Cover">
+            <button onclick="event.stopPropagation();removeFormImage()" style="font-size:0.75rem;color:var(--danger);background:none;border:none;cursor:pointer;margin-top:4px">✕ Xóa ảnh</button>
+          </div>
+          <div id="form-img-hint" class="upload-hint">🖼 Click để chọn ảnh bìa (tự động resize)</div>
+        </div>
+        <input type="file" id="form-img-input" accept="image/*" style="display:none" onchange="onFormImageChange(this)">
+      </div>
+
       <div class="form-group">
         <label>Form ID (slug) <span class="req">*</span></label>
         <input type="text" id="meta-id" placeholder="vd: mat-tien" oninput="updatePreview()">
@@ -2122,7 +2158,8 @@ function renderFieldCard(section, field, fIdx) {
         value="${escHtml(field.label || '')}"
         oninput="onQuestionInput('${field.id}', this.value)"
       >
-      <button class="btn-add-image" title="Thêm ảnh">🖼</button>
+      <button class="btn-add-image" title="Thêm ảnh minh họa" onclick="triggerFieldImageUpload('${field.id}')">🖼</button>
+      <input type="file" id="fi-img-${field.id}" accept="image/*" style="display:none" onchange="onFieldImageChange('${field.id}', this)">
       <select class="type-selector" onchange="onTypeChange('${field.id}', this.value)">
         <optgroup label="Văn bản">
           <option value="short_answer" ${field.type==='short_answer'?'selected':''}>📝 Short answer</option>
@@ -2144,6 +2181,15 @@ function renderFieldCard(section, field, fIdx) {
         </optgroup>
       </select>
     </div>
+
+    <!-- Field image (if any) -->
+    ${field.image_url ? `
+    <div class="field-img-wrap" id="fiw-${field.id}">
+      <img src="${field.image_url}" alt="Ảnh minh họa"
+        style="max-width:100%;max-height:200px;object-fit:contain;display:block;border-radius:6px;margin:0 20px 8px">
+      <button onclick="removeFieldImage('${field.id}')"
+        style="position:absolute;top:4px;right:24px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:4px;padding:3px 8px;font-size:0.78rem;cursor:pointer">✕ Xóa ảnh</button>
+    </div>` : ''}
 
     <!-- Row 2: Field body -->
     <div class="field-body" id="fb-${field.id}">
@@ -2217,6 +2263,7 @@ function buildJSON(injectWebhook) {
     title: title || 'Untitled Form',
     ...(subtitle ? { subtitle } : {}),
     ...(webhook ? { webhook } : {}),
+    ...(_formImageBase64 ? { cover_image: _formImageBase64 } : {}),
     active,
     valid_from: validFrom,
     valid_to: validTo,
@@ -2270,6 +2317,85 @@ function setMode(mode, btn) {
     if (tabPreview) tabPreview.classList.add('active');
     renderFormPreview();
   }
+}
+
+// ─── IMAGE UPLOAD & RESIZE ──────────────────────────
+let _formImageBase64 = null;
+
+function resizeImage(file, maxWidth, maxHeight, maxKB) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      // Scale down to fit maxWidth/maxHeight
+      const ratio = Math.min(maxWidth/w, maxHeight/h, 1);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+      // Compress until under maxKB
+      let quality = 0.9;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while (dataUrl.length > maxKB * 1024 * 1.37 && quality > 0.3) {
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      URL.revokeObjectURL(url);
+      resolve(dataUrl);
+    };
+    img.src = url;
+  });
+}
+
+async function onFormImageChange(input) {
+  if (!input.files?.[0]) return;
+  const dataUrl = await resizeImage(input.files[0], 1200, 400, 150);
+  _formImageBase64 = dataUrl;
+  document.getElementById('form-img-el').src = dataUrl;
+  document.getElementById('form-img-preview').style.display = 'block';
+  document.getElementById('form-img-hint').style.display = 'none';
+  updatePreview();
+}
+
+function removeFormImage() {
+  _formImageBase64 = null;
+  document.getElementById('form-img-el').src = '';
+  document.getElementById('form-img-preview').style.display = 'none';
+  document.getElementById('form-img-hint').style.display = 'block';
+  document.getElementById('form-img-input').value = '';
+  updatePreview();
+}
+
+function triggerFieldImageUpload(fieldId) {
+  const input = document.getElementById(`fi-img-${fieldId}`);
+  if (input) input.click();
+}
+
+async function onFieldImageChange(fieldId, input) {
+  if (!input.files?.[0]) return;
+  const field = findField(fieldId);
+  if (!field) return;
+
+  // Resize: max 900px wide, max 300px tall, max 120KB
+  const dataUrl = await resizeImage(input.files[0], 900, 300, 120);
+  field.image_url = dataUrl;
+
+  // Re-render card to show image
+  renderSections();
+  updatePreview();
+  showNotif('✅ Đã thêm ảnh minh họa!', 'success');
+}
+
+function removeFieldImage(fieldId) {
+  const field = findField(fieldId);
+  if (!field) return;
+  delete field.image_url;
+  renderSections();
+  updatePreview();
 }
 
 // ─── STORESLIST DATA ────────────────────────────────
@@ -2691,9 +2817,11 @@ function renderFormPreview() {
   let html = `<div class="fp-form">`;
 
   // Header
-  html += `<div class="fp-header">
+  html += `<div class="fp-header" style="${_formImageBase64 ? `background-image:url('${_formImageBase64}');background-size:cover;background-position:center;` : ''}">
+    ${_formImageBase64 ? `<div style="background:rgba(26,60,110,0.75);border-radius:inherit;padding:24px 28px 20px;margin:-24px -28px -20px">` : ''}
     <h1>${escHtml(title)}</h1>
     ${subtitle ? `<p>${escHtml(subtitle)}</p>` : ''}
+    ${_formImageBase64 ? `</div>` : ''}
   </div>`;
 
   // Sections
