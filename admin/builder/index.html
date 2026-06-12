@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v2.6 — RuralForms Admin</title>
+<title>Form Builder v2.7 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -958,7 +958,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v2.6</span>
+    <span class="badge">Form Builder v2.7</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1456,26 +1456,15 @@ ${!noValOps.includes(vOp) ? `<input type="text" class="v-val" id="vval-${id}" pl
       return `
 <div class="file-upload-config">
   <div class="config-row">
-    <label>Min files</label><input type="number" id="fu-minf-${id}" min="0" placeholder="1" value="${escHtml(String(minF))}">
-    <label>Max files</label><input type="number" id="fu-maxf-${id}" min="1" placeholder="5" value="${escHtml(String(maxF))}">
+    <label>Min files</label><input type="number" id="fu-minf-${id}" min="0" placeholder="1" value="${escHtml(String(minF))}" style="width:80px">
+    <label>Max files</label><input type="number" id="fu-maxf-${id}" min="1" placeholder="5" value="${escHtml(String(maxF))}" style="width:80px">
   </div>
   <div class="config-row">
-    <label>Max size/file (KB)</label><input type="number" id="fu-maxkb-${id}" placeholder="200" value="${escHtml(String(maxKb))}">
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;padding:4px 10px;margin-left:4px">
+    <label>Max size/file (KB)</label><input type="number" id="fu-maxkb-${id}" placeholder="200" value="${escHtml(String(maxKb))}" style="width:100px">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;border:1.5px solid var(--gray-200);border-radius:6px;padding:5px 12px;margin-left:8px;background:white;transition:border-color 0.15s">
       <input type="checkbox" id="fu-ar-${id}" ${autoResize?'checked':''} style="width:14px;height:14px;accent-color:var(--primary);cursor:pointer">
-      <span style="font-size:0.82rem;color:var(--gray-600);user-select:none">Auto Resize</span>
+      <span style="font-size:0.85rem;color:var(--gray-700);user-select:none;font-weight:500">Auto Resize</span>
     </label>
-  </div>
-  <div class="config-row">
-    <label>Max width (px)</label><input type="number" id="fu-maxw-${id}" placeholder="1920" value="${escHtml(String(maxW))}">
-    <label>Max height (px)</label><input type="number" id="fu-maxh-${id}" placeholder="1080" value="${escHtml(String(maxH))}">
-  </div>
-  <div class="config-row">
-    <label>Accept</label>
-    <select id="fu-acc-${id}">
-      <option value="image/*" ${acc==='image/*'?'selected':''}>Images only</option>
-      <option value="*" ${acc==='*'?'selected':''}>All files</option>
-    </select>
   </div>
 </div>`;
     }
@@ -1656,9 +1645,6 @@ function bindBodyListeners(fieldId) {
       listenInput(`fu-maxf-${fieldId}`, e => { field.max_files = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
       listenInput(`fu-maxkb-${fieldId}`, e => { field.max_kb = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
       listenChange(`fu-ar-${fieldId}`, e => { field.auto_resize = e.target.checked; updatePreview(); });
-      listenInput(`fu-maxw-${fieldId}`, e => { field.max_width = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
-      listenInput(`fu-maxh-${fieldId}`, e => { field.max_height = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
-      listenChange(`fu-acc-${fieldId}`, e => { field.accept = e.target.value; updatePreview(); });
       break;
 
     case 'date':
