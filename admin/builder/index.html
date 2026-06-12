@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v3.7 — RuralForms Admin</title>
+<title>Form Builder v3.8 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1162,7 +1162,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v3.7</span>
+    <span class="badge">Form Builder v3.8</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1271,6 +1271,32 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 
 <!-- Notification -->
 <div id="notif" class="notif" style="display:none"></div>
+
+<!-- Stores Filter Popup -->
+<div id="modal-stores-filter" class="modal-overlay hidden">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 id="sf-title">Chọn GĐV</h3>
+      <button class="modal-close" onclick="closeStoresFilter()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" id="sf-search" placeholder="🔍 Tìm kiếm..." oninput="filterSfList(this.value)"
+          style="flex:1;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.88rem;font-family:var(--font);outline:none">
+        <button onclick="sfSelectAll()" style="padding:6px 12px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:var(--font)">Chọn tất cả</button>
+        <button onclick="sfClearAll()" style="padding:6px 12px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:var(--font)">Bỏ chọn</button>
+      </div>
+      <div id="sf-list" style="max-height:360px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px">
+        <div style="padding:20px;text-align:center;color:var(--gray-400)">⏳ Đang tải...</div>
+      </div>
+      <div id="sf-count" style="margin-top:8px;font-size:0.82rem;color:var(--gray-500);text-align:right"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeStoresFilter()">Hủy</button>
+      <button class="btn btn-primary" onclick="confirmStoresFilter()">✓ Áp dụng</button>
+    </div>
+  </div>
+</div>
 
 <!-- Load Template Modal -->
 <div id="modal-load-template" class="modal-overlay hidden">
@@ -1742,57 +1768,37 @@ ${!noValOps.includes(vOp) ? `<input type="text" class="v-val" id="vval-${id}" pl
     }
 
     case 'stores_list': {
-      const gdvFilter  = (field.filter_gdv  || []).join('\n');
-      const qlkvFilter = (field.filter_qlkv || []).join('\n');
-      const chFilter   = (field.filter_ch   || []).join('\n');
+      const gdvSel  = field.filter_gdv  || [];
+      const qlkvSel = field.filter_qlkv || [];
+      const chSel   = field.filter_ch   || [];
       return `
-<div class="stores-config" style="flex-direction:column;gap:14px">
-  <div style="font-size:0.82rem;color:var(--gray-500)">
-    Tự động tạo <strong>3 fields liên kết</strong>: GĐV → QLKV → CH<br>
-    Để trống = hiện <strong>tất cả</strong>. Nhập danh sách để giới hạn hiển thị.
+<div class="stores-config" style="flex-direction:column;gap:10px">
+  <div style="font-size:0.82rem;color:var(--gray-500);margin-bottom:2px">
+    3 fields cascade: <strong>GĐV → QLKV → CH</strong>. Bấm <strong>Chọn</strong> để giới hạn hiển thị (mặc định = tất cả).
   </div>
 
-  <!-- GĐV filter -->
-  <div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">
-    <div style="padding:8px 12px;background:var(--primary-light);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:8px">
-      <span style="font-weight:700;font-size:0.88rem;color:var(--primary)">GĐV</span>
-      <span style="font-size:0.78rem;color:var(--gray-500)">— Giám đốc Vùng (source đầu tiên)</span>
-      <span id="sl-gdv-count-${id}" style="margin-left:auto;font-size:0.75rem;color:var(--gray-400)">${gdvFilter ? gdvFilter.split('\n').filter(Boolean).length + ' được chọn' : 'Tất cả'}</span>
-    </div>
-    <div style="padding:10px 12px">
-      <textarea id="sl-gdv-${id}" rows="3" placeholder="Để trống = hiện tất cả GĐV&#10;Hoặc nhập mỗi dòng 1 tên GĐV cần hiện:&#10;Tạ Quốc Huy&#10;Hồ Nam"
-        style="width:100%;border:1px solid var(--gray-200);border-radius:4px;padding:6px 8px;font-size:0.82rem;font-family:var(--font);resize:vertical;outline:none;box-sizing:border-box">${escHtml(gdvFilter)}</textarea>
-    </div>
+  <!-- GĐV row -->
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--primary-mid);border-radius:8px;background:var(--primary-light)">
+    <span style="font-weight:700;font-size:0.9rem;color:var(--primary);min-width:48px">GĐV</span>
+    <span style="flex:1;font-size:0.82rem;color:var(--gray-600)">${gdvSel.length ? `<strong>${gdvSel.length}</strong> được chọn: ${gdvSel.slice(0,2).join(', ')}${gdvSel.length>2?'...':''}` : 'Tất cả GĐV'}</span>
+    <button onclick="openStoresFilter('${id}','gdv')" style="padding:5px 12px;background:var(--primary);color:white;border:none;border-radius:5px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:var(--font)">Chọn ▼</button>
+    ${gdvSel.length ? `<button onclick="clearStoresFilter('${id}','gdv')" style="padding:5px 8px;background:none;border:1px solid var(--gray-300);border-radius:5px;font-size:0.78rem;cursor:pointer;color:var(--gray-500)">✕ Xóa</button>` : ''}
   </div>
 
-  <!-- QLKV filter -->
-  <div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">
-    <div style="padding:8px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:8px">
-      <span style="font-weight:700;font-size:0.88rem;color:var(--gray-700)">QLKV</span>
-      <span style="font-size:0.78rem;color:var(--gray-500)">— Quản lý Khu vực (lọc theo GĐV)</span>
-      <span id="sl-qlkv-count-${id}" style="margin-left:auto;font-size:0.75rem;color:var(--gray-400)">${qlkvFilter ? qlkvFilter.split('\n').filter(Boolean).length + ' được chọn' : 'Tất cả'}</span>
-    </div>
-    <div style="padding:10px 12px">
-      <textarea id="sl-qlkv-${id}" rows="3" placeholder="Để trống = hiện tất cả QLKV"
-        style="width:100%;border:1px solid var(--gray-200);border-radius:4px;padding:6px 8px;font-size:0.82rem;font-family:var(--font);resize:vertical;outline:none;box-sizing:border-box">${escHtml(qlkvFilter)}</textarea>
-    </div>
+  <!-- QLKV row -->
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;background:var(--gray-50)">
+    <span style="font-weight:700;font-size:0.9rem;color:var(--gray-700);min-width:48px">QLKV</span>
+    <span style="flex:1;font-size:0.82rem;color:var(--gray-600)">${qlkvSel.length ? `<strong>${qlkvSel.length}</strong> được chọn` : 'Tất cả QLKV (lọc theo GĐV)'}</span>
+    <button onclick="openStoresFilter('${id}','qlkv')" style="padding:5px 12px;background:var(--gray-700);color:white;border:none;border-radius:5px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:var(--font)">Chọn ▼</button>
+    ${qlkvSel.length ? `<button onclick="clearStoresFilter('${id}','qlkv')" style="padding:5px 8px;background:none;border:1px solid var(--gray-300);border-radius:5px;font-size:0.78rem;cursor:pointer;color:var(--gray-500)">✕ Xóa</button>` : ''}
   </div>
 
-  <!-- CH filter -->
-  <div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">
-    <div style="padding:8px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:8px">
-      <span style="font-weight:700;font-size:0.88rem;color:var(--gray-700)">CH</span>
-      <span style="font-size:0.78rem;color:var(--gray-500)">— Cửa hàng (lọc theo QLKV)</span>
-      <span id="sl-ch-count-${id}" style="margin-left:auto;font-size:0.75rem;color:var(--gray-400)">${chFilter ? chFilter.split('\n').filter(Boolean).length + ' được chọn' : 'Tất cả'}</span>
-    </div>
-    <div style="padding:10px 12px">
-      <textarea id="sl-ch-${id}" rows="3" placeholder="Để trống = hiện tất cả CH"
-        style="width:100%;border:1px solid var(--gray-200);border-radius:4px;padding:6px 8px;font-size:0.82rem;font-family:var(--font);resize:vertical;outline:none;box-sizing:border-box">${escHtml(chFilter)}</textarea>
-    </div>
-  </div>
-
-  <div style="font-size:0.78rem;color:var(--gray-400);padding:6px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px">
-    💡 Khi Publish: field này expand thành 3 sub-fields cascade với filter tương ứng
+  <!-- CH row -->
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;background:var(--gray-50)">
+    <span style="font-weight:700;font-size:0.9rem;color:var(--gray-700);min-width:48px">CH</span>
+    <span style="flex:1;font-size:0.82rem;color:var(--gray-600)">${chSel.length ? `<strong>${chSel.length}</strong> được chọn` : 'Tất cả CH (lọc theo QLKV)'}</span>
+    <button onclick="openStoresFilter('${id}','ch')" style="padding:5px 12px;background:var(--gray-700);color:white;border:none;border-radius:5px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:var(--font)">Chọn ▼</button>
+    ${chSel.length ? `<button onclick="clearStoresFilter('${id}','ch')" style="padding:5px 8px;background:none;border:1px solid var(--gray-300);border-radius:5px;font-size:0.78rem;cursor:pointer;color:var(--gray-500)">✕ Xóa</button>` : ''}
   </div>
 </div>`;
     }
@@ -1987,32 +1993,9 @@ function bindBodyListeners(fieldId) {
       break;
     }
 
-    case 'stores_list': {
-      const parseFilter = val => val.split('\n').map(s=>s.trim()).filter(Boolean);
-      const updateCount = (elId, val) => {
-        const el = document.getElementById(elId);
-        if (el) el.textContent = val.length ? val.length + ' được chọn' : 'Tất cả';
-      };
-      listenInput(`sl-gdv-${fieldId}`, e => {
-        const v = parseFilter(e.target.value);
-        field.filter_gdv = v.length ? v : undefined;
-        updateCount(`sl-gdv-count-${fieldId}`, v);
-        updatePreview();
-      });
-      listenInput(`sl-qlkv-${fieldId}`, e => {
-        const v = parseFilter(e.target.value);
-        field.filter_qlkv = v.length ? v : undefined;
-        updateCount(`sl-qlkv-count-${fieldId}`, v);
-        updatePreview();
-      });
-      listenInput(`sl-ch-${fieldId}`, e => {
-        const v = parseFilter(e.target.value);
-        field.filter_ch = v.length ? v : undefined;
-        updateCount(`sl-ch-count-${fieldId}`, v);
-        updatePreview();
-      });
+    case 'stores_list':
+      // Popup buttons handle changes directly via openStoresFilter/confirmStoresFilter
       break;
-    }
 
     case 'file_upload':
       listenInput(`fu-minf-${fieldId}`, e => { field.min_files = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
@@ -2287,6 +2270,187 @@ function setMode(mode, btn) {
     if (tabPreview) tabPreview.classList.add('active');
     renderFormPreview();
   }
+}
+
+// ─── STORESLIST DATA ────────────────────────────────
+const STORESLIST_SHEET = '1NKmzINqmfbnRMNKp8JFiCcUKi_SR-iozOQrrj58XDuE';
+const STORESLIST_GID   = '900581387';
+let _storesCache = null; // {gdvs: [], qlkvs: [], chs: [], rows: []}
+
+async function loadStoresData() {
+  if (_storesCache) return _storesCache;
+  const url = `https://docs.google.com/spreadsheets/d/${STORESLIST_SHEET}/gviz/tq?tqx=out:json&gid=${STORESLIST_GID}&tq=select%20*%20limit%202000`;
+  try {
+    const res  = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+    const rows = json.table.rows || [];
+
+    const gdvSet  = new Set();
+    const qlkvSet = new Set();
+    const chList  = [];
+    const gdvQlkvMap  = {}; // gdv → [qlkvs]
+    const qlkvChMap   = {}; // qlkv → [chs]
+
+    rows.forEach(r => {
+      const c = r.c || [];
+      const status = c[2]?.v || '';
+      if (status !== 'Đang hoạt động') return;
+
+      const maSAP  = c[0]?.v || '';
+      const tenCH  = c[1]?.v || '';
+      const qlkv   = c[9]?.v  || c[10]?.v || '';
+      const gdv    = c[11]?.v || c[12]?.v || '';
+
+      if (gdv)  gdvSet.add(gdv);
+      if (qlkv) qlkvSet.add(qlkv);
+      if (maSAP && tenCH) chList.push({ label: `${maSAP} - ${tenCH}`, qlkv, gdv });
+
+      if (gdv && qlkv) {
+        if (!gdvQlkvMap[gdv]) gdvQlkvMap[gdv] = new Set();
+        gdvQlkvMap[gdv].add(qlkv);
+      }
+      if (qlkv && maSAP) {
+        if (!qlkvChMap[qlkv]) qlkvChMap[qlkv] = new Set();
+        qlkvChMap[qlkv].add(`${maSAP} - ${tenCH}`);
+      }
+    });
+
+    _storesCache = {
+      gdvs:  [...gdvSet].sort(),
+      qlkvs: [...qlkvSet].sort(),
+      chs:   chList,
+      gdvQlkvMap:  Object.fromEntries(Object.entries(gdvQlkvMap).map(([k,v])=>[k,[...v].sort()])),
+      qlkvChMap:   Object.fromEntries(Object.entries(qlkvChMap).map(([k,v])=>[k,[...v].sort()]))
+    };
+    return _storesCache;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ─── STORES FILTER POPUP ────────────────────────────
+let _sfFieldId = null;
+let _sfLevel   = null; // 'gdv'|'qlkv'|'ch'
+let _sfItems   = [];   // full list
+let _sfSelected= new Set();
+
+async function openStoresFilter(fieldId, level) {
+  _sfFieldId = fieldId;
+  _sfLevel   = level;
+  const field = findField(fieldId);
+  if (!field) return;
+
+  // Existing selections
+  const existing = field[`filter_${level}`] || [];
+  _sfSelected = new Set(existing);
+
+  // Title
+  const titles = { gdv:'Chọn GĐV hiển thị', qlkv:'Chọn QLKV hiển thị', ch:'Chọn CH hiển thị' };
+  document.getElementById('sf-title').textContent = titles[level] || 'Chọn';
+  document.getElementById('sf-search').value = '';
+  document.getElementById('sf-list').innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-400)">⏳ Đang tải danh sách...</div>';
+  document.getElementById('modal-stores-filter').classList.remove('hidden');
+
+  // Load data
+  const data = await loadStoresData();
+  if (!data) {
+    document.getElementById('sf-list').innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger)">❌ Không tải được Storeslist</div>';
+    return;
+  }
+
+  // Build items list — cascade based on existing selections
+  if (level === 'gdv') {
+    _sfItems = data.gdvs;
+  } else if (level === 'qlkv') {
+    const gdvFilter = field.filter_gdv || [];
+    if (gdvFilter.length) {
+      const set = new Set();
+      gdvFilter.forEach(g => (data.gdvQlkvMap[g]||[]).forEach(q => set.add(q)));
+      _sfItems = [...set].sort();
+    } else {
+      _sfItems = data.qlkvs;
+    }
+  } else { // ch
+    const qlkvFilter = field.filter_qlkv || [];
+    if (qlkvFilter.length) {
+      const set = new Set();
+      qlkvFilter.forEach(q => (data.qlkvChMap[q]||[]).forEach(c => set.add(c)));
+      _sfItems = [...set].sort();
+    } else {
+      _sfItems = data.chs.map(c=>c.label);
+    }
+  }
+
+  renderSfList(_sfItems);
+}
+
+function renderSfList(items) {
+  const list = document.getElementById('sf-list');
+  if (!items.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-400)">Không có dữ liệu</div>';
+    return;
+  }
+  list.innerHTML = items.map(item => `
+    <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background 0.1s" onmouseover="this.style.background='#f8fbff'" onmouseout="this.style.background=''">
+      <input type="checkbox" value="${escHtml(item)}" ${_sfSelected.has(item)?'checked':''}
+        onchange="sfToggle('${escHtml(item.replace(/'/g,"&#39;"))}', this.checked)"
+        style="width:15px;height:15px;accent-color:var(--primary);cursor:pointer;flex-shrink:0">
+      <span style="font-size:0.88rem;color:var(--gray-800)">${escHtml(item)}</span>
+    </label>
+  `).join('');
+  updateSfCount();
+}
+
+function filterSfList(q) {
+  const filtered = q ? _sfItems.filter(i => i.toLowerCase().includes(q.toLowerCase())) : _sfItems;
+  renderSfList(filtered);
+}
+
+function sfToggle(item, checked) {
+  if (checked) _sfSelected.add(item); else _sfSelected.delete(item);
+  updateSfCount();
+}
+
+function sfSelectAll() {
+  _sfItems.forEach(i => _sfSelected.add(i));
+  renderSfList(_sfItems);
+}
+
+function sfClearAll() {
+  _sfSelected.clear();
+  renderSfList(_sfItems);
+}
+
+function updateSfCount() {
+  const el = document.getElementById('sf-count');
+  if (el) el.textContent = _sfSelected.size ? `${_sfSelected.size} được chọn` : 'Tất cả (không giới hạn)';
+}
+
+function confirmStoresFilter() {
+  const field = findField(_sfFieldId);
+  if (!field) return;
+  const key = `filter_${_sfLevel}`;
+  field[key] = _sfSelected.size ? [..._sfSelected].sort() : undefined;
+  closeStoresFilter();
+  // Re-render field body
+  const bodyEl = document.getElementById(`fb-${_sfFieldId}`);
+  if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(_sfFieldId); }
+  updatePreview();
+  showNotif(`✅ Đã chọn ${_sfSelected.size || 'tất cả'} ${_sfLevel.toUpperCase()}`, 'success');
+}
+
+function clearStoresFilter(fieldId, level) {
+  const field = findField(fieldId);
+  if (!field) return;
+  field[`filter_${level}`] = undefined;
+  const bodyEl = document.getElementById(`fb-${fieldId}`);
+  if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
+  updatePreview();
+}
+
+function closeStoresFilter() {
+  document.getElementById('modal-stores-filter').classList.add('hidden');
 }
 
 // ─── TEMPLATE MANAGEMENT ────────────────────────────
