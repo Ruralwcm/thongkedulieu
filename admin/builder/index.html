@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v4.1 — RuralForms Admin</title>
+<title>Form Builder v4.2 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1200,7 +1200,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v4.1</span>
+    <span class="badge">Form Builder v4.2</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -2939,7 +2939,18 @@ function renderFormPreview() {
       html += `<div class="fp-section-title">${escHtml(section.title)}</div>`;
     }
 
-    section.fields.forEach(field => {
+    // Expand stores_list → 3 fields trước khi preview
+    const previewFields = section.fields.flatMap(f => {
+      if (f.type !== 'stores_list') return [f];
+      const lvs = [
+        { id:`${f.id}_gdv`,  label:'Giám đốc Vùng (GĐV)', source:'gdv',  show: f.show_gdv  !== false, required: f.required },
+        { id:`${f.id}_qlkv`, label:'QLKV phụ trách',       source:'qlkv', show: f.show_qlkv !== false, required: f.required },
+        { id:`${f.id}_ch`,   label:'Cửa hàng',             source:'ch',   show: f.show_ch   !== false, required: f.required },
+      ];
+      return lvs.filter(l => l.show).map(l => ({ ...l, type: 'stores_list' }));
+    });
+
+    previewFields.forEach(field => {
       html += `<div class="fp-field">`;
       html += `<label class="fp-label">${escHtml(field.label || 'Câu hỏi')}${field.required ? `<span class="fp-req">*</span>` : ''}</label>`;
 
@@ -2969,8 +2980,9 @@ function renderFormPreview() {
           html += `</select>`;
           break;
         case 'stores_list':
-          html += `<select class="fp-select"><option value="">Chọn ${escHtml(field.source?.toUpperCase() || 'CH')}...</option></select>`;
-          html += `<div class="fp-helper">📡 Dữ liệu từ Storeslist</div>`;
+          html += `<select class="fp-select"><option value="">Chọn ${escHtml(field.source?.toUpperCase() || '')}...</option></select>`;
+          html += `<div class="fp-helper">📡 Storeslist${field.source !== 'gdv' ? ` · cascade` : ''}</div>`;
+          break;
           break;
         case 'date':
           html += `<input class="fp-input" type="date">`;
