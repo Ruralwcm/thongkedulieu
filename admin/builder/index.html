@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v2.4 — RuralForms Admin</title>
+<title>Form Builder v2.5 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -567,6 +567,67 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
+/* Validate row — Google Forms style inline */
+.validate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+}
+.v-cat-sel {
+  min-width: 160px;
+  padding: 6px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.88rem;
+  font-family: var(--font);
+  color: var(--gray-700);
+  background: white;
+  outline: none;
+  cursor: pointer;
+}
+.v-cat-sel:focus { border-color: var(--primary-mid); }
+.v-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.v-err-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  background: white;
+}
+.v-err-input {
+  flex: 1;
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  color: var(--gray-700);
+  outline: none;
+  background: transparent;
+}
+.v-err-input::placeholder { color: var(--gray-400); }
+.v-err-clear {
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.v-err-clear:hover { color: var(--gray-700); }
 .validate-type-select {
   padding: 6px 10px;
   border: 1px solid var(--gray-200);
@@ -897,7 +958,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v2.4</span>
+    <span class="badge">Form Builder v2.5</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1292,38 +1353,32 @@ ${vOp!=='URL' ? `<input type="text" class="v-val" id="vval-${id}" placeholder="V
 
       return `
 <div class="field-preview-area">${previewEl}</div>
-<div class="validate-section" style="flex-direction:column;align-items:flex-start;gap:10px">
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <label class="validate-label">Response validation:</label>
-    <select class="validate-type-select" id="vt-${id}">
-      <optgroup label="— Tắt —">
-        <option value="" ${vCat===''?'selected':''}>Không validate</option>
-      </optgroup>
-      <optgroup label="Số">
-        <option value="number" ${vCat==='number'?'selected':''}>🔢 Number</option>
-      </optgroup>
-      <optgroup label="Văn bản">
-        <option value="text" ${vCat==='text'?'selected':''}>🔤 Text</option>
-        <option value="length" ${vCat==='length'?'selected':''}>📏 Length</option>
-        <option value="regex" ${vCat==='regex'?'selected':''}>⚙️ Regular expression</option>
-      </optgroup>
-      <optgroup label="Rural / Đặc biệt">
-        <option value="phone_vn" ${vCat==='phone_vn'?'selected':''}>📱 Phone VN (09x/08x/03x/07x)</option>
-        <option value="email" ${vCat==='email'?'selected':''}>✉️ Email</option>
-        <option value="ma_code" ${vCat==='ma_code'?'selected':''}>🏷️ Mã code (alphanumeric)</option>
-        <option value="ho_ten" ${vCat==='ho_ten'?'selected':''}>👤 Họ tên VN</option>
-      </optgroup>
-    </select>
-    <div id="vsc-${id}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${subCfg}</div>
-  </div>
+<div class="validate-row">
+  <select class="validate-type-select v-cat-sel" id="vt-${id}">
+    <option value="" ${vCat===''?'selected':''}>Response validation</option>
+    <optgroup label="Số">
+      <option value="number" ${vCat==='number'?'selected':''}>Number</option>
+    </optgroup>
+    <optgroup label="Văn bản">
+      <option value="text" ${vCat==='text'?'selected':''}>Text</option>
+      <option value="length" ${vCat==='length'?'selected':''}>Length</option>
+      <option value="regex" ${vCat==='regex'?'selected':''}>Regular expression</option>
+    </optgroup>
+    <optgroup label="Đặc biệt">
+      <option value="phone_vn" ${vCat==='phone_vn'?'selected':''}>Phone VN</option>
+      <option value="email" ${vCat==='email'?'selected':''}>Email</option>
+      <option value="ma_code" ${vCat==='ma_code'?'selected':''}>Mã code</option>
+      <option value="ho_ten" ${vCat==='ho_ten'?'selected':''}>Họ tên VN</option>
+    </optgroup>
+  </select>
   ${vCat ? `
-  <div style="display:flex;align-items:center;gap:8px;width:100%">
-    <label style="font-size:0.8rem;color:var(--gray-400);white-space:nowrap">Custom error message:</label>
-    <input type="text" id="verr-${id}" class="v-err"
-      placeholder="vd: Vui lòng nhập số điện thoại hợp lệ"
-      value="${escHtml(vErr)}"
-      style="flex:1;padding:5px 8px;border:1px solid var(--gray-200);border-radius:4px;font-size:0.85rem;font-family:var(--font);outline:none">
-  </div>` : ''}
+  <div id="vsc-${id}" class="v-sub-row">${subCfg}</div>
+  <div class="v-err-wrap">
+    <input type="text" id="verr-${id}" class="v-err-input"
+      placeholder="Custom error text"
+      value="${escHtml(vErr)}">
+    <button class="v-err-clear" onclick="clearValidateErr('${id}')" title="Clear error message">×</button>
+  </div>` : `<div id="vsc-${id}"></div>`}
 </div>`;
     }
 
@@ -1951,6 +2006,13 @@ function clearAll() {
 // ═══════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════
+function clearValidateErr(fieldId) {
+  const inp = document.getElementById(`verr-${fieldId}`);
+  if (inp) inp.value = '';
+  const field = findField(fieldId);
+  if (field?.validate) { field.validate.error_msg = ''; updatePreview(); }
+}
+
 function escHtml(str) {
   return String(str || '')
     .replace(/&/g,'&amp;')
