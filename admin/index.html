@@ -246,10 +246,49 @@
     document.getElementById('stat-submissions').textContent = '—';
   }
 
-  function toggleForm(id, enabled) {
-    // In a static GitHub Pages setup, we can't modify files directly
-    // Show instructions instead
-    showToast(`Để ${enabled ? 'bật' : 'tắt'} form "${id}", hãy sửa "enabled": ${enabled} trong forms/${id}/config.json và commit lên GitHub`, 'warning', 6000);
+  async function toggleForm(id, enabled) {
+    // Lấy GitHub token từ localStorage (lưu bởi builder settings)
+    let token = '', repo = '';
+    try {
+      const s = JSON.parse(localStorage.getItem('rf_gh_settings') || '{}');
+      token = s.token || '';
+      repo  = s.repo  || 'Ruralwcm/thongkedulieu';
+    } catch(e) {}
+
+    if (!token) {
+      showToast('Chưa có GitHub token — vào Builder → ⚙️ Settings để nhập!', 'warning', 4000);
+      return;
+    }
+
+    const filePath = `forms/${id}/config.json`;
+    const apiUrl   = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+
+    try {
+      // Lấy config hiện tại
+      const res = await fetch(apiUrl, { headers: { Authorization: `token ${token}` } });
+      if (!res.ok) throw new Error('Không lấy được config');
+      const data = await res.json();
+      const cfg  = JSON.parse(atob(data.content.replace(/\n/g, '')));
+
+      // Cập nhật trạng thái
+      cfg.active = enabled;
+
+      // Push lên GitHub
+      const body = {
+        message: `form: ${enabled ? 'enable' : 'disable'} ${id}`,
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(cfg, null, 2)))),
+        sha: data.sha
+      };
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!putRes.ok) throw new Error('Push thất bại');
+      showToast(`✅ Form "${id}" đã ${enabled ? 'bật' : 'tắt'}!`, 'success');
+    } catch(e) {
+      showToast(`❌ Lỗi: ${e.message}`, 'error', 4000);
+    }
   }
 
   function copyFormLink(url) {
