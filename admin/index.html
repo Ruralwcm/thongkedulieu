@@ -96,8 +96,8 @@
             <tr>
               <th>Form</th>
               <th>URL</th>
-              <th>Trạng thái</th>
-              <th>Submissions</th>
+              <th style="text-align:center">Trạng thái</th>
+              <th style="text-align:center">Data</th>
               <th>Hành động</th>
             </tr>
           </thead>
@@ -199,7 +199,9 @@
       return;
     }
 
-    tbody.innerHTML = forms.map(form => `
+    tbody.innerHTML = forms.map(form => {
+      const fullUrl = window.location.origin + form.url.replace('../', '/').replace('./', '/');
+      return `
       <tr class="form-row">
         <td>
           <div class="font-bold">${form.config?.title || form.title}</div>
@@ -207,36 +209,35 @@
           <div class="text-xs" style="color:var(--gray-400);font-family:monospace">${form.id}</div>
         </td>
         <td>
-          <a href="${form.url}" target="_blank" class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.78rem">
-            🔗 Mở form
+          <a href="${form.url}" target="_blank" style="color:var(--primary);font-size:0.82rem;word-break:break-all;text-decoration:none">
+            ${fullUrl}
           </a>
-          <div class="form-url">${window.location.origin}${form.url.replace('../', '/').replace('./', '/')}</div>
         </td>
-        <td>
+        <td style="text-align:center">
           <label class="toggle" title="${form.enabled ? 'Đang hoạt động' : 'Tạm ngưng'}">
             <input type="checkbox" ${form.enabled ? 'checked' : ''} onchange="toggleForm('${form.id}', this.checked)">
             <span class="toggle-slider"></span>
           </label>
           <div class="text-xs text-muted mt-1">${form.enabled ? '✅ Hoạt động' : '⏸️ Tạm ngưng'}</div>
         </td>
-        <td>
+        <td style="text-align:center">
           <button class="btn btn-secondary btn-sm" onclick="viewSubmissions('${form.id}', '${form.config?.webhook || ''}')">
             📊 Xem data
           </button>
         </td>
         <td>
-          <div style="display:flex;gap:6px;flex-direction:column">
-            <a href="builder/?edit=${form.id}" class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.78rem">
-              ✏️ Chỉnh sửa
+          <div style="display:flex;gap:6px">
+            <a href="builder/?edit=${form.id}" class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.82rem">
+              ✏️ Edit
             </a>
-            <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;min-height:28px;padding:4px 10px;font-size:0.78rem"
+            <button class="btn btn-secondary btn-sm" style="min-height:28px;padding:4px 10px;font-size:0.82rem"
               onclick="copyFormLink('${form.url}')">
-              📋 Copy link
+              📋 Copy
             </button>
           </div>
         </td>
       </tr>
-    `).join('');
+    `}).join('');
   }
 
   function updateStats(forms) {
