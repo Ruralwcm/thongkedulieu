@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v4.0 — RuralForms Admin</title>
+<title>Form Builder v4.1 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1200,7 +1200,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v4.0</span>
+    <span class="badge">Form Builder v4.1</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -2506,8 +2506,9 @@ function removeFieldImage(fieldId) {
 }
 
 // ─── STORESLIST DATA ────────────────────────────────
-const STORESLIST_SHEET = '1NKmzINqmfbnRMNKp8JFiCcUKi_SR-iozOQrrj58XDuE';
+const STORESLIST_SHEET = '1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A';
 const STORESLIST_GID   = '900581387';
+// Cols: A=MaSAP, B=TenCH, C=TinhTrang, H=QLKV(idx7), I=GDV(idx8)
 let _storesCache = null; // {gdvs: [], qlkvs: [], chs: [], rows: []}
 
 async function loadStoresData() {
@@ -2532,8 +2533,8 @@ async function loadStoresData() {
 
       const maSAP  = c[0]?.v || '';
       const tenCH  = c[1]?.v || '';
-      const qlkv   = c[9]?.v  || c[10]?.v || '';
-      const gdv    = c[11]?.v || c[12]?.v || '';
+      const qlkv   = c[7]?.v || '';   // col H
+      const gdv    = c[8]?.v || '';   // col I
 
       if (gdv)  gdvSet.add(gdv);
       if (qlkv) qlkvSet.add(qlkv);
