@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v2.8 — RuralForms Admin</title>
+<title>Form Builder v2.9 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -889,6 +889,25 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 }
 .fab-btn:hover .fab-tooltip { opacity: 1; }
 
+/* ── Top mode buttons (Edit/Preview/Load/Publish) ── */
+.top-mode-btn {
+  padding: 6px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 6px;
+  background: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.top-mode-btn:hover { border-color: var(--primary-mid); color: var(--primary); background: var(--primary-light); }
+.top-mode-btn.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.top-mode-btn.publish-btn { background: var(--success); color: white; border-color: var(--success); }
+.top-mode-btn.publish-btn:hover { background: #0ea271; border-color: #0ea271; }
+
 /* ── Form Preview (user-facing) ── */
 .fp-form { font-family: var(--font); }
 .fp-header {
@@ -1092,7 +1111,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v2.8</span>
+    <span class="badge">Form Builder v2.9</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1154,15 +1173,22 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
   <main class="main-area" id="main-area">
     <div class="main-area-header">
       <h2 id="form-title-display">Chưa có tên form</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('builder',this)">✏️ Builder</button>
-          <button class="tab-btn" onclick="switchTab('preview',this)">👁 Preview</button>
-          <button class="tab-btn" onclick="switchTab('json',this)">{ } JSON</button>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <!-- Row 1: Edit / Preview / Load Template / Publish -->
+        <div style="display:flex;gap:4px;align-items:center">
+          <button class="top-mode-btn active" id="mode-edit" onclick="setMode('edit',this)">✏️ Edit</button>
+          <button class="top-mode-btn" id="mode-preview" onclick="setMode('preview',this)">👁 Preview</button>
+          <button class="top-mode-btn" onclick="openLoadSample()">📂 Load Template</button>
+          <button class="top-mode-btn publish-btn" onclick="publishForm()">🚀 Publish</button>
         </div>
-        <div class="action-bar">
+        <!-- Row 2: Builder / JSON / Copy / Download -->
+        <div style="display:flex;gap:6px;align-items:center" id="edit-toolbar">
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('builder',this)">✏ Builder</button>
+            <button class="tab-btn" onclick="switchTab('json',this)">{ } JSON</button>
+          </div>
           <button class="btn btn-secondary btn-sm" onclick="copyJSON()">📋 Copy</button>
-          <button class="btn btn-success btn-sm" onclick="downloadJSON()">⬇️ Download</button>
+          <button class="btn btn-success btn-sm" onclick="downloadJSON()">⬇ Download</button>
         </div>
       </div>
     </div>
@@ -2015,6 +2041,39 @@ function updatePreview() {
     const jsonStr = JSON.stringify(buildJSON(), null, 2);
     display.innerHTML = syntaxHighlight(jsonStr);
   }
+}
+
+function setMode(mode, btn) {
+  document.querySelectorAll('.top-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const editToolbar = document.getElementById('edit-toolbar');
+  const tabBuilder = document.getElementById('tab-builder');
+  const tabJson = document.getElementById('tab-json');
+  const tabPreview = document.getElementById('tab-preview');
+
+  if (mode === 'edit') {
+    if (editToolbar) editToolbar.style.display = 'flex';
+    // Restore active builder tab
+    [tabBuilder, tabJson, tabPreview].forEach(t => t && t.classList.remove('active'));
+    if (tabBuilder) tabBuilder.classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const builderBtn = document.querySelector('.tab-btn');
+    if (builderBtn) builderBtn.classList.add('active');
+  } else if (mode === 'preview') {
+    if (editToolbar) editToolbar.style.display = 'none';
+    [tabBuilder, tabJson, tabPreview].forEach(t => t && t.classList.remove('active'));
+    if (tabPreview) tabPreview.classList.add('active');
+    renderFormPreview();
+  }
+}
+
+function publishForm() {
+  const id = document.getElementById('meta-id').value.trim();
+  if (!id) { showNotif('Nhập Form ID trước đã anh ơi!', 'error'); return; }
+  const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    showNotif(`✅ Đã copy JSON! Paste vào forms/${id}/config.json`, 'success');
+  });
 }
 
 function switchTab(name, btn) {
