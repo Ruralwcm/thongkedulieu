@@ -262,10 +262,10 @@
 
   function viewSubmissions(formId, webhook) {
     // Lấy Sheet ID từ localStorage (settings đã lưu từ builder)
-    let sheetId = '';
+    let sheetId = '1fPH-x33pzVs-lstj-HB6M67sVNApaCwBU3g0vHKtgZ0'; // default
     try {
       const s = JSON.parse(localStorage.getItem('rf_gh_settings') || '{}');
-      sheetId = s.sheetId || '';
+      sheetId = s.sheetId || sheetId;
     } catch(e) {}
 
     if (sheetId) {
