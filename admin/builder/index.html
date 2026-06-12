@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v3.9 — RuralForms Admin</title>
+<title>Form Builder v4.0 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -940,6 +940,19 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 .pub-step.done .step-icon::after { content: ' ✅'; }
 .pub-step.error { color: var(--danger); }
 
+/* ── Crop modal ── */
+.crop-btn {
+  padding: 5px 10px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.12s;
+}
+.crop-btn:hover { background: var(--primary-light); border-color: var(--primary-mid); color: var(--primary); }
+
 /* ── Field image wrap ── */
 .field-img-wrap {
   position: relative;
@@ -1177,6 +1190,9 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
   .type-selector { min-width: 140px; }
 }
 </style>
+<!-- Cropper.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 </head>
 <body>
 
@@ -1184,7 +1200,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v3.9</span>
+    <span class="badge">Form Builder v4.0</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1307,6 +1323,47 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 
 <!-- Notification -->
 <div id="notif" class="notif" style="display:none"></div>
+
+<!-- Image Crop Modal -->
+<div id="modal-crop" class="modal-overlay hidden">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h3 id="crop-title">✂️ Crop ảnh</h3>
+      <button class="modal-close" onclick="closeCropModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:12px">
+      <!-- Crop controls -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+        <button onclick="_cropper?.rotate(-90)" class="crop-btn" title="Xoay trái">↺ -90°</button>
+        <button onclick="_cropper?.rotate(90)"  class="crop-btn" title="Xoay phải">↻ +90°</button>
+        <button onclick="_cropper?.scaleX(-(_cropper.getData().scaleX||1))" class="crop-btn" title="Lật ngang">↔️</button>
+        <button onclick="_cropper?.scaleY(-(_cropper.getData().scaleY||1))" class="crop-btn" title="Lật dọc">↕️</button>
+        <div style="width:1px;height:24px;background:var(--gray-200);margin:0 4px"></div>
+        <button onclick="_cropper?.zoom(0.1)"  class="crop-btn" title="Phóng to">🔍+</button>
+        <button onclick="_cropper?.zoom(-0.1)" class="crop-btn" title="Thu nhỏ">🔍-</button>
+        <button onclick="_cropper?.reset()"    class="crop-btn" title="Reset">↩️ Reset</button>
+        <div style="width:1px;height:24px;background:var(--gray-200);margin:0 4px"></div>
+        <span style="font-size:0.78rem;color:var(--gray-400)">Tỉ lệ:</span>
+        <button onclick="setCropRatio(16/9)"  class="crop-btn">16:9</button>
+        <button onclick="setCropRatio(4/3)"   class="crop-btn">4:3</button>
+        <button onclick="setCropRatio(1)"     class="crop-btn">1:1</button>
+        <button onclick="setCropRatio(3)"     class="crop-btn">3:1</button>
+        <button onclick="setCropRatio(NaN)"   class="crop-btn">Tự do</button>
+      </div>
+      <!-- Cropper area -->
+      <div style="background:#111;border-radius:8px;overflow:hidden;max-height:420px">
+        <img id="crop-img" src="" style="max-width:100%;display:block">
+      </div>
+      <div style="font-size:0.78rem;color:var(--gray-400);margin-top:8px;text-align:center">
+        Kéo để di chuyển vùng crop · Scroll để zoom · Kéo góc để resize
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCropModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="confirmCrop()">✓ Xác nhận</button>
+    </div>
+  </div>
+</div>
 
 <!-- Stores Filter Popup -->
 <div id="modal-stores-filter" class="modal-overlay hidden">
@@ -2319,46 +2376,106 @@ function setMode(mode, btn) {
   }
 }
 
-// ─── IMAGE UPLOAD & RESIZE ──────────────────────────
-let _formImageBase64 = null;
+// ─── IMAGE UPLOAD, CROP & RESIZE ────────────────────
+let _formImageBase64  = null;
+let _cropper          = null;
+let _cropTarget       = null; // 'form' | fieldId
+let _cropMaxW         = 1200;
+let _cropMaxH         = 400;
+let _cropMaxKB        = 150;
+let _cropRatio        = 3;    // default 3:1 for form banner
 
-function resizeImage(file, maxWidth, maxHeight, maxKB) {
-  return new Promise(resolve => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      let w = img.width, h = img.height;
-      // Scale down to fit maxWidth/maxHeight
-      const ratio = Math.min(maxWidth/w, maxHeight/h, 1);
-      w = Math.round(w * ratio);
-      h = Math.round(h * ratio);
-
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-
-      // Compress until under maxKB
-      let quality = 0.9;
-      let dataUrl = canvas.toDataURL('image/jpeg', quality);
-      while (dataUrl.length > maxKB * 1024 * 1.37 && quality > 0.3) {
-        quality -= 0.1;
-        dataUrl = canvas.toDataURL('image/jpeg', quality);
-      }
-      URL.revokeObjectURL(url);
-      resolve(dataUrl);
-    };
-    img.src = url;
-  });
+function compressCanvas(canvas, maxKB) {
+  let quality = 0.92;
+  let dataUrl = canvas.toDataURL('image/jpeg', quality);
+  while (dataUrl.length > maxKB * 1024 * 1.37 && quality > 0.3) {
+    quality -= 0.08;
+    dataUrl = canvas.toDataURL('image/jpeg', quality);
+  }
+  return dataUrl;
 }
 
-async function onFormImageChange(input) {
+function openCropModal(file, target, maxW, maxH, maxKB, ratio, title) {
+  _cropTarget = target;
+  _cropMaxW   = maxW;
+  _cropMaxH   = maxH;
+  _cropMaxKB  = maxKB;
+  _cropRatio  = ratio;
+
+  document.getElementById('crop-title').textContent = `✂️ ${title}`;
+  document.getElementById('modal-crop').classList.remove('hidden');
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const cropImg = document.getElementById('crop-img');
+    cropImg.src = e.target.result;
+    // Destroy old cropper
+    if (_cropper) { _cropper.destroy(); _cropper = null; }
+    // Init new cropper after img loads
+    cropImg.onload = () => {
+      _cropper = new Cropper(cropImg, {
+        aspectRatio: isNaN(ratio) ? NaN : ratio,
+        viewMode: 1,
+        autoCropArea: 0.85,
+        responsive: true,
+        background: true,
+      });
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+function setCropRatio(r) {
+  _cropRatio = r;
+  if (_cropper) _cropper.setAspectRatio(isNaN(r) ? NaN : r);
+}
+
+function closeCropModal() {
+  document.getElementById('modal-crop').classList.add('hidden');
+  if (_cropper) { _cropper.destroy(); _cropper = null; }
+  // Reset file inputs
+  ['form-img-input'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.querySelectorAll('[id^="fi-img-"]').forEach(el => el.value = '');
+}
+
+function confirmCrop() {
+  if (!_cropper) return;
+
+  // Get cropped canvas scaled to maxW×maxH
+  const croppedCanvas = _cropper.getCroppedCanvas({
+    maxWidth:  _cropMaxW,
+    maxHeight: _cropMaxH,
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high',
+  });
+
+  const dataUrl = compressCanvas(croppedCanvas, _cropMaxKB);
+  document.getElementById('modal-crop').classList.remove('hidden');
+
+  if (_cropTarget === 'form') {
+    _formImageBase64 = dataUrl;
+    document.getElementById('form-img-el').src = dataUrl;
+    document.getElementById('form-img-preview').style.display = 'block';
+    document.getElementById('form-img-hint').style.display = 'none';
+    updatePreview();
+    showNotif('✅ Đã lưu ảnh bìa!', 'success');
+  } else {
+    // Field image
+    const field = findField(_cropTarget);
+    if (field) {
+      field.image_url = dataUrl;
+      renderSections();
+      updatePreview();
+      showNotif('✅ Đã thêm ảnh minh họa!', 'success');
+    }
+  }
+
+  closeCropModal();
+}
+
+function onFormImageChange(input) {
   if (!input.files?.[0]) return;
-  const dataUrl = await resizeImage(input.files[0], 1200, 400, 150);
-  _formImageBase64 = dataUrl;
-  document.getElementById('form-img-el').src = dataUrl;
-  document.getElementById('form-img-preview').style.display = 'block';
-  document.getElementById('form-img-hint').style.display = 'none';
-  updatePreview();
+  openCropModal(input.files[0], 'form', 1200, 400, 150, 3, 'Crop ảnh bìa form (3:1)');
 }
 
 function removeFormImage() {
@@ -2375,19 +2492,9 @@ function triggerFieldImageUpload(fieldId) {
   if (input) input.click();
 }
 
-async function onFieldImageChange(fieldId, input) {
+function onFieldImageChange(fieldId, input) {
   if (!input.files?.[0]) return;
-  const field = findField(fieldId);
-  if (!field) return;
-
-  // Resize: max 900px wide, max 300px tall, max 120KB
-  const dataUrl = await resizeImage(input.files[0], 900, 300, 120);
-  field.image_url = dataUrl;
-
-  // Re-render card to show image
-  renderSections();
-  updatePreview();
-  showNotif('✅ Đã thêm ảnh minh họa!', 'success');
+  openCropModal(input.files[0], fieldId, 900, 320, 120, NaN, 'Crop ảnh minh họa');
 }
 
 function removeFieldImage(fieldId) {
