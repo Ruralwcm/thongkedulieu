@@ -260,50 +260,39 @@
     });
   }
 
-  async function viewSubmissions(formId, webhook) {
-    const modal = document.getElementById('submissions-modal');
-    const title = document.getElementById('modal-title');
-    const body = document.getElementById('modal-body');
+  function viewSubmissions(formId, webhook) {
+    // Lấy Sheet ID từ localStorage (settings đã lưu từ builder)
+    let sheetId = '';
+    try {
+      const s = JSON.parse(localStorage.getItem('rf_gh_settings') || '{}');
+      sheetId = s.sheetId || '';
+    } catch(e) {}
 
-    title.textContent = `Submissions: ${formId}`;
-    body.innerHTML = '<p class="text-muted">📡 Đang kết nối với Google Sheets...</p>';
-    modal.classList.add('open');
-
-    // Try to fetch from webhook (read endpoint)
-    // Google Apps Script webhook may have a GET handler for reading
-    if (webhook) {
-      try {
-        const readUrl = webhook + '?action=read&form_id=' + formId;
-        const res = await fetch(readUrl);
-        const data = await res.json();
-        if (data.rows && data.rows.length) {
-          renderSubmissions(body, data.rows);
-        } else {
-          body.innerHTML = renderNoData(formId);
-        }
-      } catch(e) {
-        body.innerHTML = renderNoData(formId);
-      }
+    if (sheetId) {
+      // Mở thẳng Google Sheet → tab tương ứng với formId
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+      window.open(url, '_blank');
     } else {
-      body.innerHTML = renderNoData(formId);
-    }
-  }
-
-  function renderNoData(formId) {
-    return `
-      <div class="alert alert-info">
-        <strong>ℹ️ Không thể tải submissions trực tiếp</strong><br>
-        Do Google Apps Script có thể chưa có endpoint GET để đọc dữ liệu.
-        <br><br>
-        <strong>Xem dữ liệu:</strong><br>
-        1. Mở Google Sheet gắn với webhook của form <strong>${formId}</strong><br>
-        2. Hoặc cấu hình endpoint GET trong Google Apps Script
-        <br><br>
-        <a href="https://docs.google.com/spreadsheets/" target="_blank" class="btn btn-secondary btn-sm">
+      // Chưa có Sheet ID → hiện modal hướng dẫn
+      const modal = document.getElementById('submissions-modal');
+      const title = document.getElementById('modal-title');
+      const body  = document.getElementById('modal-body');
+      title.textContent = `Data: ${formId}`;
+      body.innerHTML = `
+        <div style="padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:16px">
+          <strong>⚙️ Chưa cài Sheet ID</strong><br>
+          <span style="font-size:0.88rem;color:#92400e">
+            Vào <a href="builder/" style="color:#1a3c6e;font-weight:600">🔧 Builder → ⚙️ Settings</a>
+            → nhập Google Sheet ID → Lưu. Sau đó bấm "Xem data" lại.
+          </span>
+        </div>
+        <a href="https://docs.google.com/spreadsheets/" target="_blank"
+          style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--primary);color:white;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.88rem">
           📊 Mở Google Sheets
         </a>
-      </div>
-    `;
+      `;
+      modal.classList.add('open');
+    }
   }
 
   function renderSubmissions(container, rows) {
