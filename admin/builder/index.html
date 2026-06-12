@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v2.1 — RuralForms Admin</title>
+<title>Form Builder v2.2 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -161,7 +161,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 /* ── Main area ── */
 .main-area {
   flex: 1;
-  padding: 24px 80px 24px 24px; /* right padding for FAB */
+  padding: 24px 80px 24px 24px;
   overflow-y: auto;
   min-width: 0;
 }
@@ -298,218 +298,431 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
   font-size: 0.85rem;
 }
 
-/* ── Field card — Google Forms style ── */
-.field-card-wrap {
-  margin-bottom: 8px;
+/* ══════════════════════════════════════════════
+   GOOGLE FORMS STYLE FIELD CARD — v2.2
+══════════════════════════════════════════════ */
+
+/* Field card wrapper */
+.field-card-wrap { margin-bottom: 12px; }
+
+/* Field card base */
+.field-card {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  overflow: hidden;
 }
+.field-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 
 /* Collapsed state */
-.field-card {
+.field-card.collapsed {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  background: var(--gray-50);
+  padding: 12px 16px;
   cursor: pointer;
-  transition: all 0.15s;
-  user-select: none;
 }
-.field-card:hover { border-color: var(--primary-mid); background: #f0f7ff; }
-.field-card.is-expanded {
-  background: var(--primary-light);
-  border-color: var(--primary-mid);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: none;
+.field-card.collapsed:hover { border-color: var(--primary-mid); background: #f8fbff; }
+
+/* Expanded state */
+.field-card.expanded {
+  border-left: 6px solid var(--primary);
+  box-shadow: 0 2px 12px rgba(45,106,191,0.15);
 }
-.field-drag-handle {
-  color: var(--gray-400);
+
+/* Drag handle (collapsed) */
+.drag-handle {
+  color: var(--gray-300);
   font-size: 1rem;
   cursor: grab;
   flex-shrink: 0;
+  letter-spacing: 1px;
   line-height: 1;
+  user-select: none;
 }
-.field-type-icon { font-size: 1.1rem; flex-shrink: 0; }
-.field-card-label {
+.drag-handle:active { cursor: grabbing; }
+
+/* Field preview (collapsed) */
+.field-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.field-icon { font-size: 1.05rem; flex-shrink: 0; }
+.field-label-text {
   flex: 1;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--gray-800);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.field-req-star { color: var(--danger); margin-left: 2px; font-size: 0.85rem; }
-.field-card-menu {
+.field-label-text.empty { color: var(--gray-400); font-style: italic; }
+.field-required-star { color: var(--danger); font-size: 0.85rem; flex-shrink: 0; }
+
+/* Collapsed mini-actions */
+.field-mini-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
-.field-card-menu button {
+.field-mini-actions button {
   width: 26px; height: 26px;
   background: none;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--gray-500);
+  font-size: 0.82rem;
+  color: var(--gray-400);
   display: flex; align-items: center; justify-content: center;
   transition: all 0.12s;
 }
-.field-card-menu button:hover { background: var(--gray-200); color: var(--gray-800); }
-.field-card-menu button:disabled { opacity: 0.25; cursor: not-allowed; }
-.field-card-menu button.del-btn:hover { background: #fee2e2; color: var(--danger); }
+.field-mini-actions button:hover { background: var(--gray-100); color: var(--gray-700); }
+.field-mini-actions button.del:hover { background: #fee2e2; color: var(--danger); }
+.field-mini-actions button:disabled { opacity: 0.25; cursor: not-allowed; }
 
-/* ── Inline editor (expanded) ── */
-.field-editor {
-  display: none;
-  border: 1.5px solid var(--primary-mid);
-  border-top: none;
-  border-bottom-left-radius: var(--radius-sm);
-  border-bottom-right-radius: var(--radius-sm);
-  background: white;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(45,106,191,0.12);
+/* Drag handle (expanded — top of card) */
+.drag-handle-top {
+  text-align: center;
+  color: var(--gray-300);
+  font-size: 1.1rem;
+  padding: 6px 0 0;
+  cursor: grab;
+  letter-spacing: 2px;
+  user-select: none;
 }
-.field-editor.open { display: block; }
+.drag-handle-top:active { cursor: grabbing; }
 
-.fe-label-input {
-  width: 100%;
+/* Top row: question input + image btn + type selector */
+.field-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 8px;
+}
+
+/* Question input — underline style like Google Forms */
+.question-input {
+  flex: 1;
   border: none;
-  border-bottom: 2px solid var(--gray-300);
-  padding: 6px 0;
+  border-bottom: 1px solid var(--gray-300);
+  border-radius: 0;
+  padding: 8px 4px;
   font-size: 1rem;
-  font-weight: 600;
   font-family: var(--font);
   color: var(--gray-800);
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.question-input:focus { border-bottom: 2px solid var(--primary); }
+.question-input::placeholder { color: var(--gray-400); }
+
+/* Add image button */
+.btn-add-image {
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 6px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.btn-add-image:hover { background: var(--gray-100); color: var(--gray-700); }
+
+/* Type selector */
+.type-selector {
+  min-width: 185px;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.88rem;
+  background: white;
+  cursor: pointer;
+  font-family: var(--font);
+  color: var(--gray-800);
+  outline: none;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+.type-selector:focus { border-color: var(--primary-mid); box-shadow: 0 0 0 2px rgba(45,106,191,0.1); }
+
+/* Field body */
+.field-body {
+  padding: 8px 20px 16px;
+}
+
+/* Preview inputs (disabled) */
+.preview-input.underline {
+  border: none;
+  border-bottom: 1px solid var(--gray-300);
+  border-radius: 0;
+  background: transparent;
+  padding: 6px 4px;
+  color: var(--gray-400);
+  font-size: 0.9rem;
+  width: 60%;
+  outline: none;
+}
+.preview-textarea.underline {
+  border: none;
+  border-bottom: 1px solid var(--gray-300);
+  background: transparent;
+  padding: 6px 4px;
+  color: var(--gray-400);
+  width: 80%;
+  resize: none;
+  min-height: 48px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  outline: none;
+  display: block;
+}
+
+/* Options list (multiple_choice, checkboxes, dropdown) */
+.options-list { margin-bottom: 4px; }
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.option-input {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 4px 2px;
+  font-size: 0.9rem;
   outline: none;
   background: transparent;
-  margin-bottom: 14px;
-  transition: border-color 0.15s;
-}
-.fe-label-input:focus { border-bottom-color: var(--primary-mid); }
-.fe-label-input::placeholder { color: var(--gray-400); font-weight: 400; }
-
-.fe-type-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-.fe-type-select {
-  flex: 1;
-  min-width: 160px;
-  padding: 7px 10px;
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  font-size: 0.88rem;
   font-family: var(--font);
   color: var(--gray-800);
-  background: white;
-  outline: none;
-  cursor: pointer;
+  transition: border-color 0.15s;
 }
-.fe-type-select:focus { border-color: var(--primary-mid); }
-
-/* Required toggle inside editor */
-.fe-required-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-.fe-required-toggle span {
+.option-input:hover { border-bottom-color: var(--gray-300); }
+.option-input:focus { border-bottom-color: var(--primary); }
+.option-number {
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--gray-600);
-}
-
-/* Config fields */
-.fe-config {
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  margin-bottom: 14px;
-}
-.fe-config-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.fe-config-grid .full { grid-column: 1 / -1; }
-
-.fe-label {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 600;
   color: var(--gray-500);
-  margin-bottom: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  min-width: 24px;
+  flex-shrink: 0;
 }
-.fe-input {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1.5px solid var(--gray-200);
-  border-radius: 6px;
-  font-size: 0.88rem;
-  font-family: var(--font);
-  color: var(--gray-800);
-  background: white;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.fe-input:focus { border-color: var(--primary-mid); box-shadow: 0 0 0 2px rgba(45,106,191,0.08); }
-textarea.fe-input { resize: vertical; min-height: 80px; }
-
-.fe-check-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.fe-check-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
-.fe-check-row label { font-size: 0.85rem; color: var(--gray-700); cursor: pointer; }
-
-.fe-info-badge {
-  padding: 8px 12px;
-  background: var(--primary-light);
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: var(--primary);
-  font-weight: 500;
-}
-
-/* Editor footer actions */
-.fe-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--gray-100);
-}
-.fe-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 12px;
+.btn-remove-option {
+  opacity: 0;
+  background: none;
   border: none;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  color: var(--gray-400);
   cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+.option-row:hover .btn-remove-option { opacity: 1; }
+.btn-remove-option:hover { background: #fee2e2; color: var(--danger); opacity: 1; }
+
+.add-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 28px;
+  margin-top: 4px;
+}
+.btn-add-option, .btn-add-other {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.88rem;
+  padding: 4px 0;
   font-family: var(--font);
   transition: all 0.12s;
 }
-.fe-btn-danger { background: #fee2e2; color: var(--danger); }
-.fe-btn-danger:hover { background: var(--danger); color: white; }
-.fe-btn-move { background: var(--gray-100); color: var(--gray-700); border: 1.5px solid var(--gray-200); }
-.fe-btn-move:hover { background: var(--gray-200); }
-.fe-btn-move:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-add-option:hover, .btn-add-other:hover { text-decoration: underline; }
+.sep { color: var(--gray-400); font-size: 0.85rem; }
+
+/* Validate section */
+.validate-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.validate-section label.validate-label {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.validate-type-select {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.validate-type-select:focus { border-color: var(--primary-mid); }
+.validate-sub-config {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.validate-sub-config label {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+.validate-sub-config input {
+  padding: 5px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  width: 160px;
+  outline: none;
+}
+.validate-sub-config input:focus { border-color: var(--primary-mid); }
+
+/* Stores config */
+.stores-config {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.stores-config label {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.stores-config select,
+.stores-config input {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  outline: none;
+}
+.stores-config select:focus,
+.stores-config input:focus { border-color: var(--primary-mid); }
+.source-select { min-width: 180px; }
+.depends-on-input { width: 120px; }
+
+/* File upload config */
+.file-upload-config { display: flex; flex-direction: column; gap: 0; }
+
+/* Date config */
+.date-config { display: flex; flex-direction: column; gap: 10px; }
+.date-options { display: flex; gap: 16px; flex-wrap: wrap; }
+.date-options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--gray-600);
+  cursor: pointer;
+}
+
+/* Number config */
+.number-config { display: flex; flex-direction: column; gap: 0; }
+
+/* Config rows (shared) */
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.config-row label {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.config-row input[type=number],
+.config-row input[type=text],
+.config-row select {
+  padding: 5px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  width: auto;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.config-row input[type=number]:focus,
+.config-row input[type=text]:focus,
+.config-row select:focus { border-color: var(--primary-mid); }
+.config-row input[type=checkbox] {
+  width: 14px; height: 14px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Field footer */
+.field-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 16px 10px;
+  border-top: 1px solid var(--gray-100);
+  gap: 4px;
+}
+.field-footer button {
+  background: none;
+  border: none;
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 6px 8px;
+  border-radius: 50%;
+  transition: background 0.15s;
+  font-family: var(--font);
+}
+.field-footer button:hover { background: var(--gray-100); color: var(--gray-700); }
+.field-footer .btn-delete:hover { background: #fee2e2; color: var(--danger); }
+.divider-v {
+  width: 1px;
+  height: 24px;
+  background: var(--gray-200);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+.required-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  user-select: none;
+}
+.required-toggle .toggle-switch { width: 38px; height: 20px; }
+.required-toggle .toggle-switch .slider::before { width: 14px; height: 14px; }
+.required-toggle .toggle-switch input:checked + .slider::before { transform: translateX(18px); }
 
 /* ── Add section button ── */
 .add-section-btn {
@@ -649,8 +862,8 @@ textarea.fe-input { resize: vertical; min-height: 80px; }
 }
 @media (max-width: 600px) {
   .main-area { padding: 12px 64px 12px 12px; }
-  .fe-config-grid { grid-template-columns: 1fr; }
-  .fe-config-grid .full { grid-column: 1; }
+  .field-top-row { flex-wrap: wrap; }
+  .type-selector { min-width: 140px; }
 }
 </style>
 </head>
@@ -660,7 +873,7 @@ textarea.fe-input { resize: vertical; min-height: 80px; }
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v2.1</span>
+    <span class="badge">Form Builder v2.2</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -774,24 +987,48 @@ textarea.fe-input { resize: vertical; min-height: 80px; }
 // STATE
 // ═══════════════════════════════════════════════════
 let sections = [];
-let activeSectionId = null;   // section đang được focus
-let expandedFieldId = null;   // field đang expand (globally unique)
+let activeSectionId = null;
+let expandedFieldId = null;
 let sectionCounter = 0;
 
 // ═══════════════════════════════════════════════════
-// FIELD TYPE DEFINITIONS
+// FIELD TYPE MAP
 // ═══════════════════════════════════════════════════
-const FIELD_TYPES = [
-  { type: 'text',                icon: '📝', name: 'Text ngắn',    group: 'text' },
-  { type: 'textarea',            icon: '📄', name: 'Đoạn văn',     group: 'text' },
-  { type: 'phone_vn',            icon: '📱', name: 'Số điện thoại',group: 'text' },
-  { type: 'email',               icon: '✉️', name: 'Email',        group: 'text' },
-  { type: 'number',              icon: '🔢', name: 'Số',           group: 'number' },
-  { type: 'dropdown_static',     icon: '📋', name: 'Trắc nghiệm',  group: 'choice' },
-  { type: 'dropdown_storeslist', icon: '🏪', name: 'Danh sách CH', group: 'choice' },
-  { type: 'image',               icon: '📷', name: 'Tải ảnh lên',  group: 'special' },
-  { type: 'date',                icon: '📅', name: 'Ngày',         group: 'special' },
-];
+const FIELD_TYPE_ICONS = {
+  short_answer:    '📝',
+  paragraph:       '📄',
+  multiple_choice: '⭕',
+  checkboxes:      '☑️',
+  dropdown:        '📋',
+  stores_list:     '🏪',
+  file_upload:     '📷',
+  date:            '📅',
+  time:            '🕐',
+  number:          '🔢',
+};
+
+function fieldIcon(type) { return FIELD_TYPE_ICONS[type] || '📌'; }
+
+// ═══════════════════════════════════════════════════
+// DEFAULT FIELD FACTORY
+// ═══════════════════════════════════════════════════
+function defaultField(type) {
+  type = type || 'short_answer';
+  const f = {
+    id: generateId(),
+    type,
+    label: '',
+    required: false,
+  };
+  if (['multiple_choice','checkboxes','dropdown'].includes(type)) {
+    f.options = ['Option 1'];
+  }
+  return f;
+}
+
+function generateId() {
+  return 'f_' + Math.random().toString(36).slice(2, 9);
+}
 
 // ═══════════════════════════════════════════════════
 // SECTION MANAGEMENT
@@ -806,7 +1043,6 @@ function addSection(data) {
   expandedFieldId = null;
   renderSections();
   updatePreview();
-  // Scroll to new section
   if (!data) {
     setTimeout(() => {
       const el = document.getElementById(`sec-${id}`);
@@ -819,10 +1055,8 @@ function deleteSection(sectionId) {
   if (!confirm('Xóa section này và tất cả fields bên trong?')) return;
   sections = sections.filter(s => s.id !== sectionId);
   if (activeSectionId === sectionId) activeSectionId = sections[sections.length - 1]?.id || null;
-  if (expandedFieldId) {
-    const found = sections.some(s => s.fields.some(f => f.id === expandedFieldId));
-    if (!found) expandedFieldId = null;
-  }
+  const found = sections.some(s => s.fields.some(f => f.id === expandedFieldId));
+  if (!found) expandedFieldId = null;
   renderSections();
   updatePreview();
 }
@@ -834,7 +1068,6 @@ function updateSectionTitle(sectionId, title) {
 
 function setActiveSection(sectionId) {
   activeSectionId = sectionId;
-  // Re-render section borders only
   document.querySelectorAll('.section-card').forEach(el => {
     el.classList.toggle('active-section', el.id === `sec-${sectionId}`);
   });
@@ -845,10 +1078,7 @@ function setActiveSection(sectionId) {
 // ═══════════════════════════════════════════════════
 function fabAddField() {
   const targetId = activeSectionId || (sections.length > 0 ? sections[sections.length - 1].id : null);
-  if (!targetId) {
-    showNotif('Thêm section trước đã', 'error');
-    return;
-  }
+  if (!targetId) { showNotif('Thêm section trước đã', 'error'); return; }
   addFieldToSection(targetId);
 }
 
@@ -856,22 +1086,15 @@ function addFieldToSection(sectionId) {
   const section = sections.find(s => s.id === sectionId);
   if (!section) return;
   setActiveSection(sectionId);
-
-  // Generate unique field id
-  let newId, idx = section.fields.length + 1;
-  do { newId = `field_${idx++}`; } while (section.fields.some(f => f.id === newId));
-
-  const newField = { id: newId, type: 'text', label: '', required: true };
+  const newField = defaultField('short_answer');
   section.fields.push(newField);
   expandedFieldId = newField.id;
   renderSections();
   updatePreview();
-
-  // Auto-focus label input
   setTimeout(() => {
-    const inp = document.getElementById(`fe-label-${newField.id}`);
+    const inp = document.getElementById(`qi-${newField.id}`);
     if (inp) { inp.focus(); inp.select(); }
-    const el = document.getElementById(`fc-wrap-${newField.id}`);
+    const el = document.getElementById(`fc-${newField.id}`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 30);
 }
@@ -898,64 +1121,24 @@ function moveField(sectionId, fieldId, dir) {
   updatePreview();
 }
 
-function expandField(fieldId) {
-  if (expandedFieldId === fieldId) {
-    expandedFieldId = null;
-  } else {
-    expandedFieldId = fieldId;
-  }
+function duplicateField(sectionId, fieldId) {
+  const section = sections.find(s => s.id === sectionId);
+  if (!section) return;
+  const idx = section.fields.findIndex(f => f.id === fieldId);
+  if (idx < 0) return;
+  const orig = section.fields[idx];
+  const copy = JSON.parse(JSON.stringify(orig));
+  copy.id = generateId();
+  section.fields.splice(idx + 1, 0, copy);
+  expandedFieldId = copy.id;
   renderSections();
-}
-
-function collapseAll() {
-  if (expandedFieldId !== null) {
-    expandedFieldId = null;
-    renderSections();
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// LIVE FIELD UPDATE (no re-render, direct DOM)
-// ═══════════════════════════════════════════════════
-function onFieldLabelChange(fieldId, val) {
-  const field = findField(fieldId);
-  if (field) {
-    field.label = val;
-    // Update collapsed card label
-    const cardLabel = document.querySelector(`#fc-wrap-${fieldId} .field-card-label`);
-    if (cardLabel) cardLabel.innerHTML = val ? escHtml(val) + (field.required ? ' <span class="field-req-star">*</span>' : '') : '<span style="color:var(--gray-400);font-style:italic">Nhập label...</span>';
-    updatePreview();
-  }
-}
-
-function onFieldTypeChange(fieldId, newType) {
-  const field = findField(fieldId);
-  if (!field) return;
-  // Clear type-specific config
-  const keepKeys = ['id', 'type', 'label', 'required'];
-  Object.keys(field).forEach(k => { if (!keepKeys.includes(k)) delete field[k]; });
-  field.type = newType;
-  // Re-render just the config section
-  const cfgEl = document.getElementById(`fe-config-${fieldId}`);
-  if (cfgEl) cfgEl.innerHTML = renderConfigFields(field);
-  // Update icon in card header
-  const ft = FIELD_TYPES.find(t => t.type === newType);
-  const iconEl = document.querySelector(`#fc-wrap-${fieldId} .field-type-icon`);
-  if (iconEl) iconEl.textContent = ft?.icon || '📌';
-  bindConfigListeners(fieldId);
   updatePreview();
+  showNotif('📋 Đã duplicate field', 'success');
 }
 
-function onRequiredChange(fieldId, val) {
-  const field = findField(fieldId);
-  if (field) {
-    field.required = val;
-    const cardLabel = document.querySelector(`#fc-wrap-${fieldId} .field-card-label`);
-    if (cardLabel && field.label) {
-      cardLabel.innerHTML = escHtml(field.label) + (val ? ' <span class="field-req-star">*</span>' : '');
-    }
-    updatePreview();
-  }
+function toggleExpand(fieldId) {
+  expandedFieldId = (expandedFieldId === fieldId) ? null : fieldId;
+  renderSections();
 }
 
 function findField(fieldId) {
@@ -971,267 +1154,366 @@ function findSectionForField(fieldId) {
 }
 
 // ═══════════════════════════════════════════════════
-// CONFIG FIELD RENDERERS
+// LIVE FIELD UPDATES (direct DOM, no re-render)
 // ═══════════════════════════════════════════════════
-function renderConfigFields(field) {
-  const e = field;
-  switch (e.type) {
-    case 'text':
-    case 'textarea':
-      return `
-<div class="fe-config-grid">
-  <div>
-    <label class="fe-label">Placeholder</label>
-    <input class="fe-input" id="cfg-placeholder-${e.id}" type="text" placeholder="Gợi ý nhập liệu..." value="${escHtml(e.placeholder||'')}">
-  </div>
-  <div><!-- spacer --></div>
-  <div>
-    <label class="fe-label">Min length</label>
-    <input class="fe-input" id="cfg-minlen-${e.id}" type="number" min="0" placeholder="0" value="${e.validate?.min_length ?? ''}">
-  </div>
-  <div>
-    <label class="fe-label">Max length</label>
-    <input class="fe-input" id="cfg-maxlen-${e.id}" type="number" min="0" placeholder="255" value="${e.validate?.max_length ?? ''}">
-  </div>
-</div>`;
+function onQuestionInput(fieldId, val) {
+  const field = findField(fieldId);
+  if (!field) return;
+  field.label = val;
+  // Update collapsed preview label
+  const labelEl = document.querySelector(`#fc-${fieldId} .field-label-text`);
+  if (labelEl) {
+    if (val) {
+      labelEl.className = 'field-label-text';
+      labelEl.textContent = val;
+    } else {
+      labelEl.className = 'field-label-text empty';
+      labelEl.textContent = 'Nhập câu hỏi...';
+    }
+  }
+  updatePreview();
+}
 
-    case 'number':
+function onTypeChange(fieldId, newType) {
+  const field = findField(fieldId);
+  if (!field) return;
+  // Reset all type-specific props
+  const keep = ['id','type','label','required'];
+  Object.keys(field).forEach(k => { if (!keep.includes(k)) delete field[k]; });
+  field.type = newType;
+  if (['multiple_choice','checkboxes','dropdown'].includes(newType)) {
+    field.options = ['Option 1'];
+  }
+  // Re-render body only
+  const bodyEl = document.getElementById(`fb-${fieldId}`);
+  if (bodyEl) {
+    bodyEl.innerHTML = renderFieldBody(field);
+    bindBodyListeners(fieldId);
+  }
+  // Update icon in collapsed view
+  const iconEl = document.querySelector(`#fc-${fieldId} .field-icon`);
+  if (iconEl) iconEl.textContent = fieldIcon(newType);
+  updatePreview();
+}
+
+function onRequiredChange(fieldId, val) {
+  const field = findField(fieldId);
+  if (!field) return;
+  field.required = val;
+  // Update collapsed star
+  const starEl = document.querySelector(`#fc-${fieldId} .field-required-star`);
+  if (starEl) starEl.style.display = val ? '' : 'none';
+  updatePreview();
+}
+
+// ═══════════════════════════════════════════════════
+// FIELD BODY RENDERERS
+// ═══════════════════════════════════════════════════
+function renderFieldBody(field) {
+  const id = field.id;
+  switch (field.type) {
+
+    case 'short_answer': {
+      const vType = field.validate?.type || '';
+      let subCfg = '';
+      if (vType === 'email') {
+        const wl = (field.validate?.domain_whitelist || []).join(', ');
+        subCfg = `<div class="validate-sub-config"><label>Domain whitelist</label><input type="text" id="vsc-domain-${id}" placeholder="gmail.com, company.com" value="${escHtml(wl)}"></div>`;
+      } else if (vType === 'ma_code') {
+        const ml = field.validate?.max_length || '';
+        subCfg = `<div class="validate-sub-config"><label>Max length</label><input type="number" id="vsc-maxlen-${id}" placeholder="20" min="1" value="${escHtml(String(ml))}"></div>`;
+      }
       return `
-<div class="fe-config-grid">
-  <div>
-    <label class="fe-label">Đơn vị</label>
-    <select class="fe-input" id="cfg-unit-${e.id}">
-      <option value="">-- chọn --</option>
-      ${['cm','m','kg','%','pcs','đ'].map(u => `<option value="${u}" ${(e.unit||'')==u?'selected':''}>${u}</option>`).join('')}
-      <option value="__custom__" ${e.unit && !['cm','m','kg','%','pcs','đ'].includes(e.unit) ? 'selected' : ''}>Khác...</option>
+<div class="short-answer-preview">
+  <input type="text" placeholder="Short answer text" disabled class="preview-input underline">
+</div>
+<div class="validate-section">
+  <label class="validate-label">Validate:</label>
+  <select class="validate-type-select" id="vt-${id}">
+    <option value="" ${vType===''?'selected':''}>Không validate</option>
+    <option value="phone_vn" ${vType==='phone_vn'?'selected':''}>📱 Phone VN (09x/08x/03x/07x)</option>
+    <option value="email" ${vType==='email'?'selected':''}>✉️ Email</option>
+    <option value="ma_code" ${vType==='ma_code'?'selected':''}>🔤 Mã code (alphanumeric)</option>
+    <option value="ho_ten" ${vType==='ho_ten'?'selected':''}>👤 Họ tên VN</option>
+  </select>
+  <div id="vsc-${id}">${subCfg}</div>
+</div>`;
+    }
+
+    case 'paragraph':
+      return `<textarea placeholder="Long answer text" disabled class="preview-textarea underline"></textarea>`;
+
+    case 'multiple_choice': {
+      const opts = field.options || ['Option 1'];
+      const rows = opts.map((o, i) => `
+<div class="option-row" data-oidx="${i}">
+  <input type="radio" disabled>
+  <input type="text" class="option-input" data-fidx="${i}" placeholder="Option ${i+1}" value="${escHtml(o)}">
+  <button class="btn-remove-option" data-fidx="${i}" onclick="removeOption('${id}',${i})">✕</button>
+</div>`).join('');
+      return `
+<div class="options-list" id="ol-${id}">${rows}</div>
+<div class="add-option-row">
+  <input type="radio" disabled>
+  <button class="btn-add-option" onclick="addOption('${id}')">Add option</button>
+  <span class="sep">or</span>
+  <button class="btn-add-other" onclick="addOtherOption('${id}')">add "Other"</button>
+</div>`;
+    }
+
+    case 'checkboxes': {
+      const opts = field.options || ['Option 1'];
+      const rows = opts.map((o, i) => `
+<div class="option-row" data-oidx="${i}">
+  <input type="checkbox" disabled>
+  <input type="text" class="option-input" data-fidx="${i}" placeholder="Option ${i+1}" value="${escHtml(o)}">
+  <button class="btn-remove-option" data-fidx="${i}" onclick="removeOption('${id}',${i})">✕</button>
+</div>`).join('');
+      return `
+<div class="options-list" id="ol-${id}">${rows}</div>
+<div class="add-option-row">
+  <input type="checkbox" disabled>
+  <button class="btn-add-option" onclick="addOption('${id}')">Add option</button>
+  <span class="sep">or</span>
+  <button class="btn-add-other" onclick="addOtherOption('${id}')">add "Other"</button>
+</div>`;
+    }
+
+    case 'dropdown': {
+      const opts = field.options || ['Option 1'];
+      const rows = opts.map((o, i) => `
+<div class="option-row" data-oidx="${i}">
+  <span class="option-number">${i+1}.</span>
+  <input type="text" class="option-input" data-fidx="${i}" value="${escHtml(o)}">
+  <button class="btn-remove-option" data-fidx="${i}" onclick="removeOption('${id}',${i})">✕</button>
+</div>`).join('');
+      return `
+<div class="options-list dropdown-options" id="ol-${id}">${rows}</div>
+<div class="add-option-row">
+  <button class="btn-add-option" onclick="addOption('${id}')">Add option</button>
+</div>`;
+    }
+
+    case 'stores_list': {
+      const src = field.source || '';
+      const dep = field.depends_on || '';
+      return `
+<div class="stores-config">
+  <label>Source</label>
+  <select class="source-select" id="src-${id}">
+    <option value="gdv" ${src==='gdv'?'selected':''}>GĐV (Giám đốc Vùng)</option>
+    <option value="qlkv" ${src==='qlkv'?'selected':''}>QLKV (Quản lý Khu vực)</option>
+    <option value="ch" ${src==='ch'?'selected':''}>CH (Cửa hàng)</option>
+  </select>
+  <label>Depends on (field ID)</label>
+  <input type="text" class="depends-on-input" id="dep-${id}" placeholder="vd: gdv" value="${escHtml(dep)}">
+</div>`;
+    }
+
+    case 'file_upload': {
+      const minF = field.min_files ?? '';
+      const maxF = field.max_files ?? '';
+      const maxKb = field.max_kb ?? '';
+      const maxW = field.max_width ?? '';
+      const maxH = field.max_height ?? '';
+      const acc = field.accept || 'image/*';
+      return `
+<div class="file-upload-config">
+  <div class="config-row">
+    <label>Min files</label><input type="number" id="fu-minf-${id}" min="0" placeholder="1" value="${escHtml(String(minF))}">
+    <label>Max files</label><input type="number" id="fu-maxf-${id}" min="1" placeholder="5" value="${escHtml(String(maxF))}">
+  </div>
+  <div class="config-row">
+    <label>Max size/file (KB)</label><input type="number" id="fu-maxkb-${id}" placeholder="200" value="${escHtml(String(maxKb))}">
+  </div>
+  <div class="config-row">
+    <label>Max width (px)</label><input type="number" id="fu-maxw-${id}" placeholder="1920" value="${escHtml(String(maxW))}">
+    <label>Max height (px)</label><input type="number" id="fu-maxh-${id}" placeholder="1080" value="${escHtml(String(maxH))}">
+  </div>
+  <div class="config-row">
+    <label>Accept</label>
+    <select id="fu-acc-${id}">
+      <option value="image/*" ${acc==='image/*'?'selected':''}>Images only</option>
+      <option value="*" ${acc==='*'?'selected':''}>All files</option>
     </select>
   </div>
-  <div id="cfg-unit-custom-wrap-${e.id}" style="${e.unit && !['cm','m','kg','%','pcs','đ'].includes(e.unit) ? '' : 'display:none'}">
-    <label class="fe-label">Đơn vị tùy chỉnh</label>
-    <input class="fe-input" id="cfg-unit-custom-${e.id}" type="text" placeholder="vd: lần" value="${e.unit && !['cm','m','kg','%','pcs','đ'].includes(e.unit) ? escHtml(e.unit) : ''}">
-  </div>
-  <div>
-    <label class="fe-label">Min</label>
-    <input class="fe-input" id="cfg-nummin-${e.id}" type="number" placeholder="0" value="${e.validate?.min ?? ''}">
-  </div>
-  <div>
-    <label class="fe-label">Max</label>
-    <input class="fe-input" id="cfg-nummax-${e.id}" type="number" placeholder="9999" value="${e.validate?.max ?? ''}">
-  </div>
-  <div class="full">
-    <label class="fe-label">Cảnh báo trên ngưỡng (warn_above)</label>
-    <input class="fe-input" id="cfg-warnabove-${e.id}" type="number" placeholder="vd: 400" value="${e.validate?.warn_above ?? ''}">
+</div>`;
+    }
+
+    case 'date': {
+      const np = field.no_past || false;
+      const nf = field.no_future || false;
+      return `
+<div class="date-config">
+  <input type="date" disabled class="preview-input underline">
+  <div class="date-options">
+    <label><input type="checkbox" id="dt-np-${id}" ${np?'checked':''}> Không chọn ngày quá khứ</label>
+    <label><input type="checkbox" id="dt-nf-${id}" ${nf?'checked':''}> Không chọn ngày tương lai</label>
   </div>
 </div>`;
+    }
 
-    case 'dropdown_static':
-      return `
-<div class="fe-config-grid">
-  <div class="full">
-    <label class="fe-label">Danh sách options <small style="color:var(--gray-400);text-transform:none">(mỗi dòng 1 option)</small></label>
-    <textarea class="fe-input" id="cfg-options-${e.id}" rows="5" placeholder="Tùy chọn 1&#10;Tùy chọn 2&#10;Tùy chọn 3">${(e.options||[]).join('\n')}</textarea>
-  </div>
-</div>`;
+    case 'time':
+      return `<input type="time" disabled class="preview-input underline">`;
 
-    case 'dropdown_storeslist':
+    case 'number': {
+      const unit = field.unit || '';
+      const stdUnits = ['cm','m','kg','%','pcs','đ'];
+      const isCustom = unit && !stdUnits.includes(unit);
+      const numMin = field.num_min ?? '';
+      const numMax = field.num_max ?? '';
+      const numWarn = field.num_warn ?? '';
       return `
-<div class="fe-config-grid">
-  <div>
-    <label class="fe-label">Source type <span class="req">*</span></label>
-    <select class="fe-input" id="cfg-source-${e.id}">
-      <option value="">-- chọn --</option>
-      <option value="gdv" ${(e.source||'')==='gdv'?'selected':''}>GĐV</option>
-      <option value="qlkv" ${(e.source||'')==='qlkv'?'selected':''}>QLKV</option>
-      <option value="ch" ${(e.source||'')==='ch'?'selected':''}>CH (Cửa hàng)</option>
+<div class="number-config">
+  <div class="config-row">
+    <input type="number" disabled placeholder="0" class="preview-input underline" style="width:120px">
+    <select class="unit-select" id="num-unit-${id}">
+      <option value="" ${unit===''?'selected':''}>Không có đơn vị</option>
+      <option value="cm" ${unit==='cm'?'selected':''}>cm</option>
+      <option value="m" ${unit==='m'?'selected':''}>m</option>
+      <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
+      <option value="%" ${unit==='%'?'selected':''}>%</option>
+      <option value="pcs" ${unit==='pcs'?'selected':''}>pcs</option>
+      <option value="đ" ${unit==='đ'?'selected':''}>đ</option>
+      <option value="__custom__" ${isCustom?'selected':''}>Khác...</option>
     </select>
+    <input type="text" id="num-unit-custom-${id}" placeholder="Đơn vị tùy chỉnh" value="${isCustom?escHtml(unit):''}" style="display:${isCustom?'':'none'};width:120px" class="config-row">
   </div>
-  <div>
-    <label class="fe-label">Depends on (field ID)</label>
-    <input class="fe-input" id="cfg-dependson-${e.id}" type="text" placeholder="vd: gdv" value="${escHtml(e.depends_on||'')}">
-  </div>
-</div>`;
-
-    case 'image':
-      return `
-<div class="fe-config-grid">
-  <div>
-    <label class="fe-label">Min files</label>
-    <input class="fe-input" id="cfg-minfiles-${e.id}" type="number" min="0" placeholder="1" value="${e.validate?.min_files ?? ''}">
-  </div>
-  <div>
-    <label class="fe-label">Max files</label>
-    <input class="fe-input" id="cfg-maxfiles-${e.id}" type="number" min="1" placeholder="5" value="${e.validate?.max_files ?? ''}">
-  </div>
-  <div class="full">
-    <label class="fe-label">Max dung lượng/ảnh (KB)</label>
-    <input class="fe-input" id="cfg-maxkb-${e.id}" type="number" min="50" placeholder="200" value="${e.validate?.max_kb ?? ''}">
+  <div class="config-row">
+    <label>Min</label><input type="number" id="num-min-${id}" class="num-min" value="${escHtml(String(numMin))}">
+    <label>Max</label><input type="number" id="num-max-${id}" class="num-max" value="${escHtml(String(numMax))}">
+    <label>Cảnh báo trên</label><input type="number" id="num-warn-${id}" class="num-warn" value="${escHtml(String(numWarn))}">
   </div>
 </div>`;
-
-    case 'date':
-      return `
-<div class="fe-config-grid">
-  <div>
-    <label class="fe-label">Min date</label>
-    <input class="fe-input" id="cfg-mindate-${e.id}" type="date" value="${e.validate?.min_date||''}">
-  </div>
-  <div>
-    <label class="fe-label">Max date</label>
-    <input class="fe-input" id="cfg-maxdate-${e.id}" type="date" value="${e.validate?.max_date||''}">
-  </div>
-  <div class="full" style="display:flex;gap:20px;flex-wrap:wrap">
-    <div class="fe-check-row">
-      <input type="checkbox" id="cfg-nopast-${e.id}" ${e.validate?.no_past?'checked':''}>
-      <label for="cfg-nopast-${e.id}">Không chọn ngày quá khứ</label>
-    </div>
-    <div class="fe-check-row">
-      <input type="checkbox" id="cfg-nofuture-${e.id}" ${e.validate?.no_future?'checked':''}>
-      <label for="cfg-nofuture-${e.id}">Không chọn ngày tương lai</label>
-    </div>
-  </div>
-</div>`;
-
-    case 'email':
-      return `
-<div class="fe-config-grid">
-  <div class="full">
-    <label class="fe-label">Domain whitelist <small style="color:var(--gray-400);text-transform:none">(phân cách bằng dấu phẩy, để trống = chấp nhận tất cả)</small></label>
-    <input class="fe-input" id="cfg-domainwl-${e.id}" type="text" placeholder="gmail.com, company.com" value="${escHtml((e.domain_whitelist||[]).join(', '))}">
-  </div>
-</div>`;
-
-    case 'phone_vn':
-      return `<div class="fe-info-badge">✅ Tự động validate format Việt Nam: 09x / 08x / 03x / 07x (10 chữ số)</div>`;
+    }
 
     default:
-      return '';
+      return `<div style="color:var(--gray-400);font-size:0.85rem;padding:8px 0">Không có cấu hình cho loại này.</div>`;
   }
 }
 
 // ═══════════════════════════════════════════════════
-// BIND CONFIG LISTENERS (update state on input)
+// OPTION MANAGEMENT (multiple_choice / checkboxes / dropdown)
 // ═══════════════════════════════════════════════════
-function bindConfigListeners(fieldId) {
+function addOption(fieldId) {
+  const field = findField(fieldId);
+  if (!field || !field.options) return;
+  field.options.push(`Option ${field.options.length + 1}`);
+  // Re-render body
+  const bodyEl = document.getElementById(`fb-${fieldId}`);
+  if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
+  updatePreview();
+  // Focus new option
+  setTimeout(() => {
+    const ol = document.getElementById(`ol-${fieldId}`);
+    if (ol) {
+      const inputs = ol.querySelectorAll('.option-input');
+      const last = inputs[inputs.length - 1];
+      if (last) { last.focus(); last.select(); }
+    }
+  }, 10);
+}
+
+function addOtherOption(fieldId) {
+  const field = findField(fieldId);
+  if (!field || !field.options) return;
+  if (!field.options.includes('Other')) field.options.push('Other');
+  const bodyEl = document.getElementById(`fb-${fieldId}`);
+  if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
+  updatePreview();
+}
+
+function removeOption(fieldId, idx) {
+  const field = findField(fieldId);
+  if (!field || !field.options) return;
+  if (field.options.length <= 1) { showNotif('Cần ít nhất 1 option', 'error'); return; }
+  field.options.splice(idx, 1);
+  const bodyEl = document.getElementById(`fb-${fieldId}`);
+  if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
+  updatePreview();
+}
+
+// ═══════════════════════════════════════════════════
+// BIND BODY LISTENERS
+// ═══════════════════════════════════════════════════
+function bindBodyListeners(fieldId) {
   const field = findField(fieldId);
   if (!field) return;
 
-  const listenInput = (id, fn) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', fn);
-  };
-  const listenChange = (id, fn) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', fn);
-  };
+  function listenInput(id, fn) { const el = document.getElementById(id); if (el) el.addEventListener('input', fn); }
+  function listenChange(id, fn) { const el = document.getElementById(id); if (el) el.addEventListener('change', fn); }
 
   switch (field.type) {
-    case 'text':
-    case 'textarea':
-      listenInput(`cfg-placeholder-${fieldId}`, e => { field.placeholder = e.target.value || undefined; updatePreview(); });
-      listenInput(`cfg-minlen-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.min_length = e.target.value ? parseInt(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
+    case 'short_answer':
+      listenChange(`vt-${fieldId}`, e => {
+        const vt = e.target.value;
+        if (!vt) { delete field.validate; }
+        else { field.validate = { type: vt }; }
+        // Re-render sub-config
+        const bodyEl = document.getElementById(`fb-${fieldId}`);
+        if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
+        updatePreview();
       });
-      listenInput(`cfg-maxlen-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
+      listenInput(`vsc-domain-${fieldId}`, e => {
+        if (!field.validate) field.validate = { type: 'email' };
+        const domains = e.target.value.split(',').map(s=>s.trim()).filter(Boolean);
+        field.validate.domain_whitelist = domains.length ? domains : undefined;
+        updatePreview();
+      });
+      listenInput(`vsc-maxlen-${fieldId}`, e => {
+        if (!field.validate) field.validate = { type: 'ma_code' };
         field.validate.max_length = e.target.value ? parseInt(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
-      });
-      break;
-
-    case 'number':
-      listenChange(`cfg-unit-${fieldId}`, e => {
-        const val = e.target.value;
-        const wrap = document.getElementById(`cfg-unit-custom-wrap-${fieldId}`);
-        if (wrap) wrap.style.display = val === '__custom__' ? '' : 'none';
-        if (val !== '__custom__') { field.unit = val || undefined; updatePreview(); }
-      });
-      listenInput(`cfg-unit-custom-${fieldId}`, e => { field.unit = e.target.value || undefined; updatePreview(); });
-      listenInput(`cfg-nummin-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.min = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
-      });
-      listenInput(`cfg-nummax-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.max = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
-      });
-      listenInput(`cfg-warnabove-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.warn_above = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
-      });
-      break;
-
-    case 'dropdown_static':
-      listenInput(`cfg-options-${fieldId}`, e => {
-        field.options = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
         updatePreview();
       });
       break;
 
-    case 'dropdown_storeslist':
-      listenChange(`cfg-source-${fieldId}`, e => { field.source = e.target.value || undefined; updatePreview(); });
-      listenInput(`cfg-dependson-${fieldId}`, e => { field.depends_on = e.target.value.trim() || undefined; updatePreview(); });
+    case 'multiple_choice':
+    case 'checkboxes':
+    case 'dropdown': {
+      const ol = document.getElementById(`ol-${fieldId}`);
+      if (ol) {
+        ol.querySelectorAll('.option-input').forEach((inp, i) => {
+          inp.addEventListener('input', e => {
+            if (field.options) field.options[i] = e.target.value;
+            updatePreview();
+          });
+        });
+      }
+      break;
+    }
+
+    case 'stores_list':
+      listenChange(`src-${fieldId}`, e => { field.source = e.target.value || undefined; updatePreview(); });
+      listenInput(`dep-${fieldId}`, e => { field.depends_on = e.target.value.trim() || undefined; updatePreview(); });
       break;
 
-    case 'image':
-      listenInput(`cfg-minfiles-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.min_files = e.target.value ? parseInt(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
-      });
-      listenInput(`cfg-maxfiles-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.max_files = e.target.value ? parseInt(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
-      });
-      listenInput(`cfg-maxkb-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.max_kb = e.target.value ? parseInt(e.target.value) : undefined;
-        cleanValidate(field); updatePreview();
-      });
+    case 'file_upload':
+      listenInput(`fu-minf-${fieldId}`, e => { field.min_files = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
+      listenInput(`fu-maxf-${fieldId}`, e => { field.max_files = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
+      listenInput(`fu-maxkb-${fieldId}`, e => { field.max_kb = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
+      listenInput(`fu-maxw-${fieldId}`, e => { field.max_width = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
+      listenInput(`fu-maxh-${fieldId}`, e => { field.max_height = e.target.value ? parseInt(e.target.value) : undefined; updatePreview(); });
+      listenChange(`fu-acc-${fieldId}`, e => { field.accept = e.target.value; updatePreview(); });
       break;
 
     case 'date':
-      listenInput(`cfg-mindate-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.min_date = e.target.value || undefined;
-        cleanValidate(field); updatePreview();
-      });
-      listenInput(`cfg-maxdate-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.max_date = e.target.value || undefined;
-        cleanValidate(field); updatePreview();
-      });
-      listenChange(`cfg-nopast-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.no_past = e.target.checked || undefined;
-        cleanValidate(field); updatePreview();
-      });
-      listenChange(`cfg-nofuture-${fieldId}`, e => {
-        if (!field.validate) field.validate = {};
-        field.validate.no_future = e.target.checked || undefined;
-        cleanValidate(field); updatePreview();
-      });
+      listenChange(`dt-np-${fieldId}`, e => { field.no_past = e.target.checked || undefined; updatePreview(); });
+      listenChange(`dt-nf-${fieldId}`, e => { field.no_future = e.target.checked || undefined; updatePreview(); });
       break;
 
-    case 'email':
-      listenInput(`cfg-domainwl-${fieldId}`, e => {
-        const domains = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-        field.domain_whitelist = domains.length ? domains : undefined;
-        updatePreview();
+    case 'number':
+      listenChange(`num-unit-${fieldId}`, e => {
+        const val = e.target.value;
+        const customInp = document.getElementById(`num-unit-custom-${fieldId}`);
+        if (customInp) customInp.style.display = val === '__custom__' ? '' : 'none';
+        if (val !== '__custom__') { field.unit = val || undefined; updatePreview(); }
       });
+      listenInput(`num-unit-custom-${fieldId}`, e => { field.unit = e.target.value || undefined; updatePreview(); });
+      listenInput(`num-min-${fieldId}`, e => { field.num_min = e.target.value !== '' ? parseFloat(e.target.value) : undefined; updatePreview(); });
+      listenInput(`num-max-${fieldId}`, e => { field.num_max = e.target.value !== '' ? parseFloat(e.target.value) : undefined; updatePreview(); });
+      listenInput(`num-warn-${fieldId}`, e => { field.num_warn = e.target.value !== '' ? parseFloat(e.target.value) : undefined; updatePreview(); });
       break;
   }
-}
-
-function cleanValidate(field) {
-  if (!field.validate) return;
-  const hasValue = Object.values(field.validate).some(v => v !== undefined && v !== null);
-  if (!hasValue) delete field.validate;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1250,7 +1532,7 @@ function renderSections() {
     return;
   }
 
-  container.innerHTML = sections.map((section, sIdx) => `
+  container.innerHTML = sections.map((section) => `
     <div class="section-card ${activeSectionId === section.id ? 'active-section' : ''}" id="sec-${section.id}" onclick="setActiveSection('${section.id}')">
       <div class="section-header" onclick="event.stopPropagation(); setActiveSection('${section.id}')">
         <input
@@ -1260,15 +1542,14 @@ function renderSections() {
           placeholder="Tên section..."
           oninput="updateSectionTitle('${section.id}', this.value)"
           onclick="event.stopPropagation()"
-          title="Click để sửa tên section"
         >
         <span class="section-id-badge">${escHtml(section.id)}</span>
         <button class="btn-section-del" title="Xóa section" onclick="event.stopPropagation(); deleteSection('${section.id}')">🗑️</button>
       </div>
       <div class="section-body">
         ${section.fields.length === 0
-          ? `<div class="empty-fields">Chưa có field nào. Nhấn ➕ ở phải màn hình để thêm.</div>`
-          : section.fields.map((field, fIdx) => renderFieldCardWrap(section, field, fIdx)).join('')
+          ? `<div class="empty-fields">Chưa có field nào. Nhấn ➕ để thêm.</div>`
+          : section.fields.map((field, fIdx) => renderFieldCard(section, field, fIdx)).join('')
         }
         <div style="margin-top:10px;padding-top:8px;border-top:1.5px dashed var(--gray-200)">
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); addFieldToSection('${section.id}')">
@@ -1279,102 +1560,112 @@ function renderSections() {
     </div>
   `).join('');
 
-  // Bind all config listeners for expanded field
-  sections.forEach(section => {
-    section.fields.forEach(field => {
-      if (expandedFieldId === field.id) {
-        setTimeout(() => bindConfigListeners(field.id), 0);
-      }
+  // Bind listeners for all visible expanded fields
+  setTimeout(() => {
+    sections.forEach(section => {
+      section.fields.forEach(field => {
+        if (expandedFieldId === field.id) {
+          bindBodyListeners(field.id);
+        }
+      });
     });
-  });
+  }, 0);
 }
 
-function renderFieldCardWrap(section, field, fIdx) {
-  const ft = FIELD_TYPES.find(t => t.type === field.type);
-  const icon = ft?.icon || '📌';
+function renderFieldCard(section, field, fIdx) {
   const isExpanded = expandedFieldId === field.id;
   const isFirst = fIdx === 0;
   const isLast = fIdx === section.fields.length - 1;
+  const icon = fieldIcon(field.type);
 
-  return `
+  if (!isExpanded) {
+    // COLLAPSED STATE
+    return `
 <div class="field-card-wrap" id="fc-wrap-${field.id}">
-  <!-- Collapsed header -->
-  <div class="field-card ${isExpanded ? 'is-expanded' : ''}"
-    onclick="event.stopPropagation(); expandField('${field.id}')">
-    <span class="field-drag-handle" title="Kéo để sắp xếp">⠿</span>
-    <span class="field-type-icon">${icon}</span>
-    <span class="field-card-label">${field.label
-      ? escHtml(field.label) + (field.required ? ' <span class="field-req-star">*</span>' : '')
-      : '<span style="color:var(--gray-400);font-style:italic">Nhập label...</span>'
-    }</span>
-    <div class="field-card-menu" onclick="event.stopPropagation()">
-      <button title="Di chuyển lên" onclick="moveField('${section.id}','${field.id}',-1)" ${isFirst?'disabled':''}>↑</button>
-      <button title="Di chuyển xuống" onclick="moveField('${section.id}','${field.id}',1)" ${isLast?'disabled':''}>↓</button>
-      <button class="del-btn" title="Xóa field" onclick="deleteField('${section.id}','${field.id}')">✕</button>
+  <div class="field-card collapsed" id="fc-${field.id}" onclick="event.stopPropagation(); toggleExpand('${field.id}')">
+    <div class="drag-handle" onclick="event.stopPropagation()">⠿⠿</div>
+    <div class="field-preview">
+      <span class="field-icon">${icon}</span>
+      <span class="field-label-text ${field.label ? '' : 'empty'}">${field.label ? escHtml(field.label) : 'Nhập câu hỏi...'}</span>
+      <span class="field-required-star" style="display:${field.required?'':'none'}">*</span>
+    </div>
+    <div class="field-mini-actions" onclick="event.stopPropagation()">
+      <button title="Lên" onclick="moveField('${section.id}','${field.id}',-1)" ${isFirst?'disabled':''}>↑</button>
+      <button title="Xuống" onclick="moveField('${section.id}','${field.id}',1)" ${isLast?'disabled':''}>↓</button>
+      <button class="del" title="Xóa" onclick="deleteField('${section.id}','${field.id}')">✕</button>
     </div>
   </div>
+</div>`;
+  }
 
-  <!-- Inline editor (expanded) -->
-  <div class="field-editor ${isExpanded ? 'open' : ''}" id="fe-${field.id}" onclick="event.stopPropagation()">
-    <!-- Label input -->
-    <input
-      class="fe-label-input"
-      id="fe-label-${field.id}"
-      type="text"
-      placeholder="Nhập câu hỏi / nhãn field..."
-      value="${escHtml(field.label || '')}"
-      oninput="onFieldLabelChange('${field.id}', this.value)"
-    >
+  // EXPANDED STATE
+  return `
+<div class="field-card-wrap" id="fc-wrap-${field.id}">
+  <div class="field-card expanded" id="fc-${field.id}" onclick="event.stopPropagation()">
+    <!-- Drag handle top -->
+    <div class="drag-handle-top">⠿⠿⠿⠿⠿</div>
 
-    <!-- Type selector + Required toggle -->
-    <div class="fe-type-row">
-      <select class="fe-type-select" onchange="onFieldTypeChange('${field.id}', this.value)">
-        <optgroup label="📝 Văn bản">
-          <option value="text" ${field.type==='text'?'selected':''}>📝 Text ngắn</option>
-          <option value="textarea" ${field.type==='textarea'?'selected':''}>📄 Đoạn văn</option>
-          <option value="phone_vn" ${field.type==='phone_vn'?'selected':''}>📱 Số điện thoại</option>
-          <option value="email" ${field.type==='email'?'selected':''}>✉️ Email</option>
+    <!-- Row 1: Question input + image icon + type selector -->
+    <div class="field-top-row">
+      <input
+        class="question-input"
+        id="qi-${field.id}"
+        placeholder="Câu hỏi"
+        value="${escHtml(field.label || '')}"
+        oninput="onQuestionInput('${field.id}', this.value)"
+      >
+      <button class="btn-add-image" title="Thêm ảnh">🖼</button>
+      <select class="type-selector" onchange="onTypeChange('${field.id}', this.value)">
+        <optgroup label="Văn bản">
+          <option value="short_answer" ${field.type==='short_answer'?'selected':''}>📝 Short answer</option>
+          <option value="paragraph" ${field.type==='paragraph'?'selected':''}>📄 Paragraph</option>
         </optgroup>
-        <optgroup label="🔢 Số & Đo">
-          <option value="number" ${field.type==='number'?'selected':''}>🔢 Số</option>
+        <optgroup label="Lựa chọn">
+          <option value="multiple_choice" ${field.type==='multiple_choice'?'selected':''}>⭕ Multiple choice</option>
+          <option value="checkboxes" ${field.type==='checkboxes'?'selected':''}>☑️ Checkboxes</option>
+          <option value="dropdown" ${field.type==='dropdown'?'selected':''}>📋 Dropdown</option>
         </optgroup>
-        <optgroup label="📋 Lựa chọn">
-          <option value="dropdown_static" ${field.type==='dropdown_static'?'selected':''}>📋 Trắc nghiệm</option>
-          <option value="dropdown_storeslist" ${field.type==='dropdown_storeslist'?'selected':''}>🏪 Danh sách CH</option>
+        <optgroup label="Rural">
+          <option value="stores_list" ${field.type==='stores_list'?'selected':''}>🏪 Stores List</option>
         </optgroup>
-        <optgroup label="✨ Đặc biệt">
-          <option value="image" ${field.type==='image'?'selected':''}>📷 Tải ảnh lên</option>
-          <option value="date" ${field.type==='date'?'selected':''}>📅 Ngày</option>
+        <optgroup label="Khác">
+          <option value="file_upload" ${field.type==='file_upload'?'selected':''}>📷 File upload</option>
+          <option value="date" ${field.type==='date'?'selected':''}>📅 Date</option>
+          <option value="time" ${field.type==='time'?'selected':''}>🕐 Time</option>
+          <option value="number" ${field.type==='number'?'selected':''}>🔢 Number</option>
         </optgroup>
       </select>
+    </div>
 
-      <div class="fe-required-toggle">
-        <label class="toggle-switch" style="width:38px;height:20px">
-          <input type="checkbox" id="fe-req-${field.id}" ${field.required?'checked':''}
-            onchange="onRequiredChange('${field.id}', this.checked)">
-          <span class="slider"></span>
+    <!-- Row 2: Field body -->
+    <div class="field-body" id="fb-${field.id}">
+      ${renderFieldBody(field)}
+    </div>
+
+    <!-- Row 3: Footer -->
+    <div class="field-footer">
+      <div class="footer-left"></div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <button class="btn-duplicate" title="Duplicate" onclick="duplicateField('${section.id}','${field.id}')">📋</button>
+        <button class="btn-delete" title="Delete" onclick="deleteField('${section.id}','${field.id}')">🗑</button>
+        <div class="divider-v"></div>
+        <label class="required-toggle" onclick="event.stopPropagation()">
+          Required
+          <label class="toggle-switch" style="width:38px;height:20px">
+            <input type="checkbox" class="required-cb" id="req-${field.id}" ${field.required?'checked':''}
+              onchange="onRequiredChange('${field.id}', this.checked)">
+            <span class="slider"></span>
+          </label>
         </label>
-        <span>Bắt buộc</span>
+        <button class="btn-more" title="More" style="color:var(--gray-400)">⋮</button>
       </div>
-    </div>
-
-    <!-- Config area -->
-    <div class="fe-config" id="fe-config-${field.id}">
-      ${renderConfigFields(field)}
-    </div>
-
-    <!-- Footer actions -->
-    <div class="fe-actions">
-      <button class="fe-btn fe-btn-danger" onclick="deleteField('${section.id}','${field.id}')">🗑️ Xóa</button>
-      <button class="fe-btn fe-btn-move" onclick="moveField('${section.id}','${field.id}',-1)" ${isFirst?'disabled':''}>↑ Lên</button>
-      <button class="fe-btn fe-btn-move" onclick="moveField('${section.id}','${field.id}',1)" ${isLast?'disabled':''}>↓ Xuống</button>
     </div>
   </div>
 </div>`;
 }
 
 // ═══════════════════════════════════════════════════
-// JSON / PREVIEW
+// BUILD JSON OUTPUT
 // ═══════════════════════════════════════════════════
 function buildJSON() {
   const id = document.getElementById('meta-id').value.trim();
@@ -1385,14 +1676,21 @@ function buildJSON() {
   const validFrom = document.getElementById('meta-valid-from').value || null;
   const validTo = document.getElementById('meta-valid-to').value || null;
 
-  // Clean undefined from field objects
   const cleanSections = sections.map(s => ({
     id: s.id,
     title: s.title,
-    fields: s.fields.map(f => JSON.parse(JSON.stringify(f, (k,v) => v === undefined ? undefined : v)))
+    fields: s.fields.map(f => {
+      // Serialize field, remove undefined
+      const out = {};
+      for (const [k, v] of Object.entries(f)) {
+        if (v === undefined || v === null || v === '') continue;
+        out[k] = v;
+      }
+      return out;
+    })
   }));
 
-  const obj = {
+  return {
     id: id || 'untitled',
     title: title || 'Untitled Form',
     ...(subtitle ? { subtitle } : {}),
@@ -1402,7 +1700,6 @@ function buildJSON() {
     valid_to: validTo,
     sections: cleanSections
   };
-  return obj;
 }
 
 function syntaxHighlight(json) {
@@ -1446,11 +1743,8 @@ function copyJSON() {
     .then(() => showNotif('✅ Đã copy JSON!', 'success'))
     .catch(() => {
       const ta = document.createElement('textarea');
-      ta.value = json;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
+      ta.value = json; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
       showNotif('✅ Đã copy JSON!', 'success');
     });
 }
@@ -1461,8 +1755,7 @@ function downloadJSON() {
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `${id}-config.json`;
-  a.click();
+  a.href = url; a.download = `${id}-config.json`; a.click();
   URL.revokeObjectURL(url);
   showNotif('⬇️ Đang tải file...', 'success');
 }
@@ -1494,9 +1787,9 @@ function loadSample() {
     id: 's1',
     title: 'Thông tin cửa hàng',
     fields: [
-      { id: 'gdv',  type: 'dropdown_storeslist', label: 'Giám đốc Vùng (GĐV)', source: 'gdv',  required: true },
-      { id: 'qlkv', type: 'dropdown_storeslist', label: 'QLKV phụ trách',       source: 'qlkv', depends_on: 'gdv',  required: true },
-      { id: 'ch',   type: 'dropdown_storeslist', label: 'Cửa hàng',             source: 'ch',   depends_on: 'qlkv', required: true },
+      { id: 'gdv',  type: 'stores_list', label: 'Giám đốc Vùng (GĐV)', source: 'gdv',  required: true },
+      { id: 'qlkv', type: 'stores_list', label: 'QLKV phụ trách',       source: 'qlkv', depends_on: 'gdv',  required: true },
+      { id: 'ch',   type: 'stores_list', label: 'Cửa hàng',             source: 'ch',   depends_on: 'qlkv', required: true },
     ]
   });
 
@@ -1504,11 +1797,11 @@ function loadSample() {
     id: 's2',
     title: 'Kích thước mặt tiền',
     fields: [
-      { id: 'kv1', type: 'number', label: 'Mặt kính KV CHT',              unit: 'cm', required: true,  validate: { min: 1, max: 9999, warn_above: 400 } },
-      { id: 'kv2', type: 'number', label: 'Cửa kính ra vào',              unit: 'cm', required: true,  validate: { min: 1, max: 9999, warn_above: 400 } },
-      { id: 'kv3', type: 'number', label: 'Mặt kính còn lại 01',          unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
-      { id: 'kv4', type: 'number', label: 'Mặt kính còn lại 02 (Lô góc)', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
-      { id: 'kv5', type: 'number', label: 'Mặt kính còn lại 03 (Lô góc)', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv1', type: 'number', label: 'Mặt kính KV CHT',              unit: 'cm', required: true,  num_min: 1, num_max: 9999, num_warn: 400 },
+      { id: 'kv2', type: 'number', label: 'Cửa kính ra vào',              unit: 'cm', required: true,  num_min: 1, num_max: 9999, num_warn: 400 },
+      { id: 'kv3', type: 'number', label: 'Mặt kính còn lại 01',          unit: 'cm', required: false, num_min: 1, num_max: 9999, num_warn: 400 },
+      { id: 'kv4', type: 'number', label: 'Mặt kính còn lại 02 (Lô góc)', unit: 'cm', required: false, num_min: 1, num_max: 9999, num_warn: 400 },
+      { id: 'kv5', type: 'number', label: 'Mặt kính còn lại 03 (Lô góc)', unit: 'cm', required: false, num_min: 1, num_max: 9999, num_warn: 400 },
     ]
   });
 
@@ -1516,7 +1809,7 @@ function loadSample() {
     id: 's3',
     title: 'Hình ảnh',
     fields: [
-      { id: 'photos', type: 'image', label: 'Ảnh mặt tiền', required: true, validate: { min_files: 1, max_files: 3, max_kb: 200 } },
+      { id: 'photos', type: 'file_upload', label: 'Ảnh mặt tiền', required: true, min_files: 1, max_files: 3, max_kb: 200, accept: 'image/*' },
     ]
   });
 
@@ -1545,7 +1838,7 @@ function clearAll() {
 // UTILS
 // ═══════════════════════════════════════════════════
 function escHtml(str) {
-  return String(str)
+  return String(str || '')
     .replace(/&/g,'&amp;')
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
@@ -1571,15 +1864,12 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Click outside field cards → collapse
 document.addEventListener('click', e => {
   if (!expandedFieldId) return;
-  // If click is inside a field-card-wrap, do nothing
   if (e.target.closest('.field-card-wrap')) return;
-  // If click is inside FAB bar, do nothing
   if (e.target.closest('.fab-bar')) return;
-  // If click is inside sidebar, do nothing
   if (e.target.closest('.sidebar')) return;
+  if (e.target.closest('.section-header')) return;
   expandedFieldId = null;
   renderSections();
 });
