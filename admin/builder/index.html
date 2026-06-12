@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v2.9 — RuralForms Admin</title>
+<title>Form Builder v3.0 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -889,6 +889,57 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 }
 .fab-btn:hover .fab-tooltip { opacity: 1; }
 
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalIn 0.18s ease;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(0.95) translateY(-8px); } to { opacity:1; transform: none; } }
+.modal-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-size: 1rem; font-weight: 700; color: var(--gray-800); margin: 0; }
+.modal-close {
+  width: 30px; height: 30px;
+  background: var(--gray-100); border: none; border-radius: 6px;
+  cursor: pointer; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-600); transition: background 0.15s;
+}
+.modal-close:hover { background: var(--gray-200); }
+.modal-body { padding: 16px 20px; }
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--gray-100);
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+
+/* Publish step */
+.pub-step {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.88rem; color: var(--gray-700);
+}
+.pub-step .step-icon { font-size: 1.1rem; flex-shrink: 0; }
+.pub-step.done .step-icon::after { content: ' ✅'; }
+.pub-step.error { color: var(--danger); }
+
 /* ── Top mode buttons (Edit/Preview/Load/Publish) ── */
 .top-mode-btn {
   padding: 6px 14px;
@@ -1111,7 +1162,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v2.9</span>
+    <span class="badge">Form Builder v3.0</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1180,6 +1231,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
           <button class="top-mode-btn" id="mode-preview" onclick="setMode('preview',this)">👁 Preview</button>
           <button class="top-mode-btn" onclick="openLoadSample()">📂 Load Template</button>
           <button class="top-mode-btn publish-btn" onclick="publishForm()">🚀 Publish</button>
+          <button class="top-mode-btn" onclick="openSettings()" title="GitHub Settings" style="padding:6px 10px">⚙️</button>
         </div>
         <!-- Row 2: Builder / JSON / Copy / Download -->
         <div style="display:flex;gap:6px;align-items:center" id="edit-toolbar">
@@ -1232,6 +1284,70 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 
 <!-- Notification -->
 <div id="notif" class="notif" style="display:none"></div>
+
+<!-- Settings Modal -->
+<div id="modal-settings" class="modal-overlay hidden">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3>⚙️ Cài đặt Publish</h3>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
+          GitHub Token <span style="color:var(--danger)">*</span>
+        </label>
+        <input type="password" id="cfg-gh-token" class="cfg-input" placeholder="ghp_xxxxxxxxxxxx"
+          style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.9rem;font-family:var(--font);outline:none">
+        <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
+          Tạo tại <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--primary)">github.com/settings/tokens</a> — scope: <code>repo</code>. Lưu trong localStorage (không gửi ra ngoài).
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
+          GitHub Repo <span style="color:var(--danger)">*</span>
+        </label>
+        <input type="text" id="cfg-gh-repo" class="cfg-input" placeholder="Ruralwcm/thongkedulieu"
+          style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.9rem;font-family:var(--font);outline:none">
+      </div>
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
+          Forms folder path
+        </label>
+        <input type="text" id="cfg-gh-path" class="cfg-input" placeholder="forms"
+          style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.9rem;font-family:var(--font);outline:none">
+        <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
+          Config sẽ push tới <code>{repo}/{path}/{form-id}/config.json</code>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Progress Modal -->
+<div id="modal-publish" class="modal-overlay hidden">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3 id="pub-title">🚀 Đang publish...</h3>
+      <button class="modal-close" onclick="closePublishModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="pub-steps" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="pub-link-row" style="display:none;margin-top:16px;padding:12px;background:var(--primary-light);border-radius:8px;border:1px solid var(--primary-mid)">
+        <div style="font-size:0.82rem;color:var(--gray-500);margin-bottom:4px">Form live tại:</div>
+        <a id="pub-link" href="#" target="_blank" style="color:var(--primary);font-weight:600;font-size:0.9rem;word-break:break-all"></a>
+      </div>
+    </div>
+    <div class="modal-footer" id="pub-footer" style="display:none">
+      <button class="btn btn-secondary" onclick="closePublishModal()">Đóng</button>
+      <button class="btn btn-primary" onclick="openPublishedForm()">🔗 Mở form</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════
@@ -2067,13 +2183,115 @@ function setMode(mode, btn) {
   }
 }
 
-function publishForm() {
-  const id = document.getElementById('meta-id').value.trim();
-  if (!id) { showNotif('Nhập Form ID trước đã anh ơi!', 'error'); return; }
+// ─── SETTINGS ───────────────────────────────────────
+function openSettings() {
+  const s = loadSettings();
+  document.getElementById('cfg-gh-token').value = s.token || '';
+  document.getElementById('cfg-gh-repo').value  = s.repo  || 'Ruralwcm/thongkedulieu';
+  document.getElementById('cfg-gh-path').value  = s.path  || 'forms';
+  document.getElementById('modal-settings').classList.remove('hidden');
+}
+function closeSettings() {
+  document.getElementById('modal-settings').classList.add('hidden');
+}
+function saveSettings() {
+  const token = document.getElementById('cfg-gh-token').value.trim();
+  const repo  = document.getElementById('cfg-gh-repo').value.trim();
+  const path  = document.getElementById('cfg-gh-path').value.trim() || 'forms';
+  if (!token || !repo) { showNotif('Cần nhập Token và Repo!', 'error'); return; }
+  localStorage.setItem('rf_gh_settings', JSON.stringify({ token, repo, path }));
+  closeSettings();
+  showNotif('✅ Đã lưu settings!', 'success');
+}
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem('rf_gh_settings') || '{}'); } catch { return {}; }
+}
+
+// ─── PUBLISH ─────────────────────────────────────────
+async function publishForm() {
+  const formId = document.getElementById('meta-id').value.trim();
+  if (!formId) { showNotif('Nhập Form ID trước!', 'error'); return; }
+
+  const s = loadSettings();
+  if (!s.token || !s.repo) {
+    openSettings();
+    showNotif('Nhập GitHub token trước nhé!', 'error');
+    return;
+  }
+
   const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
-  navigator.clipboard.writeText(json).then(() => {
-    showNotif(`✅ Đã copy JSON! Paste vào forms/${id}/config.json`, 'success');
-  });
+  const filePath = `${s.path || 'forms'}/${formId}/config.json`;
+  const apiUrl = `https://api.github.com/repos/${s.repo}/contents/${filePath}`;
+
+  // Show progress modal
+  document.getElementById('modal-publish').classList.remove('hidden');
+  document.getElementById('pub-title').textContent = '🚀 Đang publish...';
+  document.getElementById('pub-link-row').style.display = 'none';
+  document.getElementById('pub-footer').style.display = 'none';
+  const steps = document.getElementById('pub-steps');
+  steps.innerHTML = '';
+
+  function addStep(icon, text) {
+    const el = document.createElement('div');
+    el.className = 'pub-step';
+    el.innerHTML = `<span class="step-icon">${icon}</span><span>${text}</span>`;
+    steps.appendChild(el);
+    return el;
+  }
+
+  const s1 = addStep('⏳', `Kiểm tra file hiện tại...`);
+  let sha = '';
+  try {
+    const res = await fetch(apiUrl, { headers: { Authorization: `token ${s.token}` } });
+    if (res.ok) { const d = await res.json(); sha = d.sha || ''; }
+    s1.innerHTML = `<span class="step-icon">✅</span><span>Kiểm tra file hiện tại — OK</span>`;
+  } catch {
+    s1.innerHTML = `<span class="step-icon">✅</span><span>File chưa tồn tại — tạo mới</span>`;
+  }
+
+  const s2 = addStep('⏳', `Push config.json lên ${s.repo}...`);
+  try {
+    const body = { message: `form: publish ${formId} via RuralForms Builder`, content: btoa(unescape(encodeURIComponent(json))) };
+    if (sha) body.sha = sha;
+    const res = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { Authorization: `token ${s.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.message || 'GitHub API error');
+    const commit = d.commit?.sha?.slice(0,8) || '';
+    s2.innerHTML = `<span class="step-icon">✅</span><span>Push thành công! Commit: <code>${commit}</code></span>`;
+  } catch(e) {
+    s2.innerHTML = `<span class="step-icon">❌</span><span class="pub-step error">Lỗi: ${e.message}</span>`;
+    document.getElementById('pub-title').textContent = '❌ Publish thất bại';
+    document.getElementById('pub-footer').style.display = 'flex';
+    return;
+  }
+
+  const s3 = addStep('⏳', 'GitHub Pages đang deploy (~1 phút)...');
+  setTimeout(() => {
+    s3.innerHTML = `<span class="step-icon">✅</span><span>Deploy xong!</span>`;
+  }, 3000);
+
+  const repoOwner = s.repo.split('/')[0];
+  const repoName  = s.repo.split('/')[1];
+  const formUrl = `https://${repoOwner.toLowerCase()}.github.io/${repoName}/f/${formId}/`;
+
+  document.getElementById('pub-title').textContent = '✅ Đã publish!';
+  document.getElementById('pub-link').textContent = formUrl;
+  document.getElementById('pub-link').href = formUrl;
+  document.getElementById('pub-link-row').style.display = 'block';
+  document.getElementById('pub-footer').style.display = 'flex';
+}
+
+function closePublishModal() {
+  document.getElementById('modal-publish').classList.add('hidden');
+}
+
+function openPublishedForm() {
+  const link = document.getElementById('pub-link').href;
+  if (link && link !== '#') window.open(link, '_blank');
 }
 
 function switchTab(name, btn) {
