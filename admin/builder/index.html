@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v2.3 — RuralForms Admin</title>
+<title>Form Builder v2.4 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -599,6 +599,30 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
   outline: none;
 }
 .validate-sub-config input:focus { border-color: var(--primary-mid); }
+/* Validate op/val inputs */
+.v-op-sel {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  outline: none;
+  min-width: 160px;
+}
+.v-op-sel:focus { border-color: var(--primary-mid); }
+.v-val {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  outline: none;
+  min-width: 100px;
+}
+.v-val:focus { border-color: var(--primary-mid); }
+.v-err:focus { border-color: var(--primary-mid); }
 
 /* Stores config */
 .stores-config {
@@ -873,7 +897,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v2.3</span>
+    <span class="badge">Form Builder v2.4</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1213,35 +1237,95 @@ function renderFieldBody(field) {
   const id = field.id;
   switch (field.type) {
 
-    case 'short_answer': {
-      const vType = field.validate?.type || '';
+    case 'short_answer':
+    case 'paragraph': {
+      const isPara = field.type === 'paragraph';
+      const vCat = field.validate?.category || '';  // number | text | length | regex | phone_vn | email | ma_code | ho_ten
+      const vOp  = field.validate?.op || '';
+      const vVal = field.validate?.value ?? '';
+      const vVal2= field.validate?.value2 ?? '';
+      const vErr = field.validate?.error_msg || '';
+
+      // Sub-config hiện tùy category
       let subCfg = '';
-      if (vType === 'email') {
-        const wl = (field.validate?.domain_whitelist || []).join(', ');
-        subCfg = `<div class="validate-sub-config"><label>Domain whitelist</label><input type="text" id="vsc-domain-${id}" placeholder="gmail.com, company.com" value="${escHtml(wl)}"></div>`;
-      } else if (vType === 'ma_code') {
-        const ml = field.validate?.max_length || '';
-        subCfg = `<div class="validate-sub-config"><label>Max length</label><input type="number" id="vsc-maxlen-${id}" placeholder="20" min="1" value="${escHtml(String(ml))}"></div>`;
+
+      if (vCat === 'number') {
+        const ops = ['Greater than','Less than','Greater than or equal to','Less than or equal to','Equal to','Not equal to','Between','Not between','Is number','Whole number'];
+        const needVal2 = ['Between','Not between'].includes(vOp);
+        subCfg = `
+<select class="v-op-sel" id="vop-${id}">
+  ${ops.map(o=>`<option value="${o}" ${vOp===o?'selected':''}>${o}</option>`).join('')}
+</select>
+${!['Is number','Whole number'].includes(vOp) ? `<input type="number" class="v-val" id="vval-${id}" placeholder="Value" value="${escHtml(String(vVal))}">` : ''}
+${needVal2 ? `<span style="color:var(--gray-400);font-size:0.85rem">and</span><input type="number" class="v-val" id="vval2-${id}" placeholder="Value" value="${escHtml(String(vVal2))}">` : ''}`;
+      } else if (vCat === 'text') {
+        const ops = ['Contains','Does not contain','Starts with','Ends with','URL'];
+        subCfg = `
+<select class="v-op-sel" id="vop-${id}">
+  ${ops.map(o=>`<option value="${o}" ${vOp===o?'selected':''}>${o}</option>`).join('')}
+</select>
+${vOp!=='URL' ? `<input type="text" class="v-val" id="vval-${id}" placeholder="Value" value="${escHtml(String(vVal))}">` : ''}`;
+      } else if (vCat === 'length') {
+        const ops = ['Maximum character count','Minimum character count'];
+        subCfg = `
+<select class="v-op-sel" id="vop-${id}">
+  ${ops.map(o=>`<option value="${o}" ${vOp===o?'selected':''}>${o}</option>`).join('')}
+</select>
+<input type="number" class="v-val" id="vval-${id}" placeholder="255" min="1" value="${escHtml(String(vVal))}">`;
+      } else if (vCat === 'regex') {
+        const ops = ['Matches','Does not match'];
+        subCfg = `
+<select class="v-op-sel" id="vop-${id}">
+  ${ops.map(o=>`<option value="${o}" ${vOp===o?'selected':''}>${o}</option>`).join('')}
+</select>
+<input type="text" class="v-val" id="vval-${id}" placeholder="^[A-Z]{3}[0-9]+$" value="${escHtml(String(vVal))}">`;
+      } else if (vCat === 'email') {
+        const wl = (field.validate?.domain_whitelist||[]).join(', ');
+        subCfg = `<input type="text" class="v-val" id="vval-${id}" placeholder="Domain whitelist: gmail.com, company.com (để trống = tất cả)" value="${escHtml(wl)}" style="width:280px">`;
+      } else if (vCat === 'ma_code') {
+        subCfg = `<input type="number" class="v-val" id="vval-${id}" placeholder="Max length (vd: 10)" min="1" value="${escHtml(String(vVal))}">`;
       }
+
+      const previewEl = isPara
+        ? `<textarea placeholder="Long answer text" disabled class="preview-textarea underline"></textarea>`
+        : `<input type="text" placeholder="Short answer text" disabled class="preview-input underline">`;
+
       return `
-<div class="short-answer-preview">
-  <input type="text" placeholder="Short answer text" disabled class="preview-input underline">
-</div>
-<div class="validate-section">
-  <label class="validate-label">Validate:</label>
-  <select class="validate-type-select" id="vt-${id}">
-    <option value="" ${vType===''?'selected':''}>Không validate</option>
-    <option value="phone_vn" ${vType==='phone_vn'?'selected':''}>📱 Phone VN (09x/08x/03x/07x)</option>
-    <option value="email" ${vType==='email'?'selected':''}>✉️ Email</option>
-    <option value="ma_code" ${vType==='ma_code'?'selected':''}>🔤 Mã code (alphanumeric)</option>
-    <option value="ho_ten" ${vType==='ho_ten'?'selected':''}>👤 Họ tên VN</option>
-  </select>
-  <div id="vsc-${id}">${subCfg}</div>
+<div class="field-preview-area">${previewEl}</div>
+<div class="validate-section" style="flex-direction:column;align-items:flex-start;gap:10px">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <label class="validate-label">Response validation:</label>
+    <select class="validate-type-select" id="vt-${id}">
+      <optgroup label="— Tắt —">
+        <option value="" ${vCat===''?'selected':''}>Không validate</option>
+      </optgroup>
+      <optgroup label="Số">
+        <option value="number" ${vCat==='number'?'selected':''}>🔢 Number</option>
+      </optgroup>
+      <optgroup label="Văn bản">
+        <option value="text" ${vCat==='text'?'selected':''}>🔤 Text</option>
+        <option value="length" ${vCat==='length'?'selected':''}>📏 Length</option>
+        <option value="regex" ${vCat==='regex'?'selected':''}>⚙️ Regular expression</option>
+      </optgroup>
+      <optgroup label="Rural / Đặc biệt">
+        <option value="phone_vn" ${vCat==='phone_vn'?'selected':''}>📱 Phone VN (09x/08x/03x/07x)</option>
+        <option value="email" ${vCat==='email'?'selected':''}>✉️ Email</option>
+        <option value="ma_code" ${vCat==='ma_code'?'selected':''}>🏷️ Mã code (alphanumeric)</option>
+        <option value="ho_ten" ${vCat==='ho_ten'?'selected':''}>👤 Họ tên VN</option>
+      </optgroup>
+    </select>
+    <div id="vsc-${id}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${subCfg}</div>
+  </div>
+  ${vCat ? `
+  <div style="display:flex;align-items:center;gap:8px;width:100%">
+    <label style="font-size:0.8rem;color:var(--gray-400);white-space:nowrap">Custom error message:</label>
+    <input type="text" id="verr-${id}" class="v-err"
+      placeholder="vd: Vui lòng nhập số điện thoại hợp lệ"
+      value="${escHtml(vErr)}"
+      style="flex:1;padding:5px 8px;border:1px solid var(--gray-200);border-radius:4px;font-size:0.85rem;font-family:var(--font);outline:none">
+  </div>` : ''}
 </div>`;
     }
-
-    case 'paragraph':
-      return `<textarea placeholder="Long answer text" disabled class="preview-textarea underline"></textarea>`;
 
     case 'multiple_choice': {
       const opts = field.options || ['Option 1'];
@@ -1450,24 +1534,48 @@ function bindBodyListeners(fieldId) {
 
   switch (field.type) {
     case 'short_answer':
+    case 'paragraph':
+      // Category selector — re-render sub-config on change
       listenChange(`vt-${fieldId}`, e => {
-        const vt = e.target.value;
-        if (!vt) { delete field.validate; }
-        else { field.validate = { type: vt }; }
-        // Re-render sub-config
+        const cat = e.target.value;
+        if (!cat) { delete field.validate; }
+        else { field.validate = { category: cat, op: '', value: '', value2: '', error_msg: '' }; }
         const bodyEl = document.getElementById(`fb-${fieldId}`);
         if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
         updatePreview();
       });
-      listenInput(`vsc-domain-${fieldId}`, e => {
-        if (!field.validate) field.validate = { type: 'email' };
-        const domains = e.target.value.split(',').map(s=>s.trim()).filter(Boolean);
-        field.validate.domain_whitelist = domains.length ? domains : undefined;
+      // Op selector
+      listenChange(`vop-${fieldId}`, e => {
+        if (!field.validate) return;
+        field.validate.op = e.target.value;
+        const bodyEl = document.getElementById(`fb-${fieldId}`);
+        if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
         updatePreview();
       });
-      listenInput(`vsc-maxlen-${fieldId}`, e => {
-        if (!field.validate) field.validate = { type: 'ma_code' };
-        field.validate.max_length = e.target.value ? parseInt(e.target.value) : undefined;
+      // Value input
+      listenInput(`vval-${fieldId}`, e => {
+        if (!field.validate) return;
+        const cat = field.validate.category;
+        if (cat === 'email') {
+          const domains = e.target.value.split(',').map(s=>s.trim()).filter(Boolean);
+          field.validate.domain_whitelist = domains.length ? domains : undefined;
+        } else if (cat === 'ma_code') {
+          field.validate.value = e.target.value ? parseInt(e.target.value) : '';
+        } else {
+          field.validate.value = e.target.value;
+        }
+        updatePreview();
+      });
+      // Value2 (Between)
+      listenInput(`vval2-${fieldId}`, e => {
+        if (!field.validate) return;
+        field.validate.value2 = e.target.value;
+        updatePreview();
+      });
+      // Error message
+      listenInput(`verr-${fieldId}`, e => {
+        if (!field.validate) return;
+        field.validate.error_msg = e.target.value;
         updatePreview();
       });
       break;
