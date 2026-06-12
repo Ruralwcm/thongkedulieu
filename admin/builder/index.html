@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v2.5 — RuralForms Admin</title>
+<title>Form Builder v2.6 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -958,7 +958,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v2.5</span>
+    <span class="badge">Form Builder v2.6</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1320,12 +1320,13 @@ function renderFieldBody(field) {
 ${!['Is number','Whole number'].includes(vOp) ? `<input type="number" class="v-val" id="vval-${id}" placeholder="Value" value="${escHtml(String(vVal))}">` : ''}
 ${needVal2 ? `<span style="color:var(--gray-400);font-size:0.85rem">and</span><input type="number" class="v-val" id="vval2-${id}" placeholder="Value" value="${escHtml(String(vVal2))}">` : ''}`;
       } else if (vCat === 'text') {
-        const ops = ['Contains','Does not contain','Starts with','Ends with','URL'];
+        const ops = ['Contains','Doesn\'t contain','Email','URL'];
+        const noValOps = ['Email','URL'];
         subCfg = `
 <select class="v-op-sel" id="vop-${id}">
   ${ops.map(o=>`<option value="${o}" ${vOp===o?'selected':''}>${o}</option>`).join('')}
 </select>
-${vOp!=='URL' ? `<input type="text" class="v-val" id="vval-${id}" placeholder="Value" value="${escHtml(String(vVal))}">` : ''}`;
+${!noValOps.includes(vOp) ? `<input type="text" class="v-val" id="vval-${id}" placeholder="Text" value="${escHtml(String(vVal))}">` : ''}`;
       } else if (vCat === 'length') {
         const ops = ['Maximum character count','Minimum character count'];
         subCfg = `
@@ -1356,17 +1357,12 @@ ${vOp!=='URL' ? `<input type="text" class="v-val" id="vval-${id}" placeholder="V
 <div class="validate-row">
   <select class="validate-type-select v-cat-sel" id="vt-${id}">
     <option value="" ${vCat===''?'selected':''}>Response validation</option>
-    <optgroup label="Số">
-      <option value="number" ${vCat==='number'?'selected':''}>Number</option>
-    </optgroup>
-    <optgroup label="Văn bản">
-      <option value="text" ${vCat==='text'?'selected':''}>Text</option>
-      <option value="length" ${vCat==='length'?'selected':''}>Length</option>
-      <option value="regex" ${vCat==='regex'?'selected':''}>Regular expression</option>
-    </optgroup>
-    <optgroup label="Đặc biệt">
+    <option value="number" ${vCat==='number'?'selected':''}>Number</option>
+    <option value="text" ${vCat==='text'?'selected':''}>Text</option>
+    <option value="length" ${vCat==='length'?'selected':''}>Length</option>
+    <option value="regex" ${vCat==='regex'?'selected':''}>Regular expression</option>
+    <optgroup label="Rural">
       <option value="phone_vn" ${vCat==='phone_vn'?'selected':''}>Phone VN</option>
-      <option value="email" ${vCat==='email'?'selected':''}>Email</option>
       <option value="ma_code" ${vCat==='ma_code'?'selected':''}>Mã code</option>
       <option value="ho_ten" ${vCat==='ho_ten'?'selected':''}>Họ tên VN</option>
     </optgroup>
