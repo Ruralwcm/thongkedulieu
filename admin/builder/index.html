@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v3.1 — RuralForms Admin</title>
+<title>Form Builder v3.2 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1162,7 +1162,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v3.1</span>
+    <span class="badge">Form Builder v3.2</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1191,10 +1191,8 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
         <label>Mô tả</label>
         <textarea id="meta-subtitle" placeholder="Mô tả ngắn về mục đích form" oninput="updatePreview()"></textarea>
       </div>
-      <div class="form-group">
-        <label>Webhook URL</label>
-        <input type="url" id="meta-webhook" placeholder="https://script.google.com/..." oninput="updatePreview()">
-      </div>
+      <!-- Webhook URL moved to ⚙️ Settings -->
+      <input type="hidden" id="meta-webhook" value="">
       <div class="form-group">
         <label>Hiệu lực từ ngày</label>
         <input type="date" id="meta-valid-from" oninput="updatePreview()">
@@ -1281,31 +1279,46 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
       <button class="modal-close" onclick="closeSettings()">✕</button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <!-- Webhook -->
       <div>
         <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
-          GitHub Token <span style="color:var(--danger)">*</span>
+          🔗 Webhook URL <small style="color:var(--gray-400);font-weight:400">(dùng chung cho tất cả forms)</small>
         </label>
-        <input type="password" id="cfg-gh-token" class="cfg-input" placeholder="ghp_xxxxxxxxxxxx"
+        <input type="url" id="cfg-webhook" placeholder="https://script.google.com/macros/s/.../exec"
+          style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.88rem;font-family:var(--font);outline:none">
+        <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
+          Google Apps Script nhận data → lưu vào Google Sheets (mỗi form 1 tab riêng theo Form ID)
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--gray-100);margin:4px 0">
+
+      <!-- GitHub -->
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
+          🔑 GitHub Token <span style="color:var(--danger)">*</span>
+        </label>
+        <input type="password" id="cfg-gh-token" placeholder="ghp_xxxxxxxxxxxx"
           style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.9rem;font-family:var(--font);outline:none">
         <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
-          Tạo tại <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--primary)">github.com/settings/tokens</a> — scope: <code>repo</code>. Lưu trong localStorage (không gửi ra ngoài).
+          Tạo tại <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--primary)">github.com/settings/tokens</a> — scope: <code>repo</code>
         </div>
       </div>
       <div>
         <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
-          GitHub Repo <span style="color:var(--danger)">*</span>
+          📦 GitHub Repo <span style="color:var(--danger)">*</span>
         </label>
-        <input type="text" id="cfg-gh-repo" class="cfg-input" placeholder="Ruralwcm/thongkedulieu"
+        <input type="text" id="cfg-gh-repo" placeholder="Ruralwcm/thongkedulieu"
           style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.9rem;font-family:var(--font);outline:none">
       </div>
       <div>
         <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
-          Forms folder path
+          📁 Forms folder path
         </label>
-        <input type="text" id="cfg-gh-path" class="cfg-input" placeholder="forms"
+        <input type="text" id="cfg-gh-path" placeholder="forms"
           style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.9rem;font-family:var(--font);outline:none">
         <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
-          Config sẽ push tới <code>{repo}/{path}/{form-id}/config.json</code>
+          Config push tới <code>{repo}/{path}/{form-id}/config.json</code>
         </div>
       </div>
     </div>
@@ -2088,11 +2101,12 @@ function renderFieldCard(section, field, fIdx) {
 // ═══════════════════════════════════════════════════
 // BUILD JSON OUTPUT
 // ═══════════════════════════════════════════════════
-function buildJSON() {
+function buildJSON(injectWebhook) {
   const id = document.getElementById('meta-id').value.trim();
   const title = document.getElementById('meta-title').value.trim();
   const subtitle = document.getElementById('meta-subtitle').value.trim();
-  const webhook = document.getElementById('meta-webhook').value.trim();
+  const settingsWebhook = loadSettings().webhook || '';
+  const webhook = injectWebhook ? settingsWebhook : (document.getElementById('meta-webhook')?.value.trim() || settingsWebhook);
   const active = document.getElementById('meta-active').checked;
   const validFrom = document.getElementById('meta-valid-from').value || null;
   const validTo = document.getElementById('meta-valid-to').value || null;
@@ -2174,20 +2188,22 @@ function setMode(mode, btn) {
 // ─── SETTINGS ───────────────────────────────────────
 function openSettings() {
   const s = loadSettings();
-  document.getElementById('cfg-gh-token').value = s.token || '';
-  document.getElementById('cfg-gh-repo').value  = s.repo  || 'Ruralwcm/thongkedulieu';
-  document.getElementById('cfg-gh-path').value  = s.path  || 'forms';
+  document.getElementById('cfg-webhook').value  = s.webhook || '';
+  document.getElementById('cfg-gh-token').value = s.token   || '';
+  document.getElementById('cfg-gh-repo').value  = s.repo    || 'Ruralwcm/thongkedulieu';
+  document.getElementById('cfg-gh-path').value  = s.path    || 'forms';
   document.getElementById('modal-settings').classList.remove('hidden');
 }
 function closeSettings() {
   document.getElementById('modal-settings').classList.add('hidden');
 }
 function saveSettings() {
-  const token = document.getElementById('cfg-gh-token').value.trim();
-  const repo  = document.getElementById('cfg-gh-repo').value.trim();
-  const path  = document.getElementById('cfg-gh-path').value.trim() || 'forms';
-  if (!token || !repo) { showNotif('Cần nhập Token và Repo!', 'error'); return; }
-  localStorage.setItem('rf_gh_settings', JSON.stringify({ token, repo, path }));
+  const webhook = document.getElementById('cfg-webhook').value.trim();
+  const token   = document.getElementById('cfg-gh-token').value.trim();
+  const repo    = document.getElementById('cfg-gh-repo').value.trim();
+  const path    = document.getElementById('cfg-gh-path').value.trim() || 'forms';
+  if (!token || !repo) { showNotif('Cần nhập GitHub Token và Repo!', 'error'); return; }
+  localStorage.setItem('rf_gh_settings', JSON.stringify({ webhook, token, repo, path }));
   closeSettings();
   showNotif('✅ Đã lưu settings!', 'success');
 }
@@ -2207,7 +2223,7 @@ async function publishForm() {
     return;
   }
 
-  const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
+  const json = JSON.stringify(buildJSON(true), (k,v) => v === undefined ? undefined : v, 2);
   const filePath = `${s.path || 'forms'}/${formId}/config.json`;
   const apiUrl = `https://api.github.com/repos/${s.repo}/contents/${filePath}`;
 
