@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v3.0 — RuralForms Admin</title>
+<title>Form Builder v3.1 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1162,7 +1162,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v3.0</span>
+    <span class="badge">Form Builder v3.1</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1233,15 +1233,8 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
           <button class="top-mode-btn publish-btn" onclick="publishForm()">🚀 Publish</button>
           <button class="top-mode-btn" onclick="openSettings()" title="GitHub Settings" style="padding:6px 10px">⚙️</button>
         </div>
-        <!-- Row 2: Builder / JSON / Copy / Download -->
-        <div style="display:flex;gap:6px;align-items:center" id="edit-toolbar">
-          <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('builder',this)">✏ Builder</button>
-            <button class="tab-btn" onclick="switchTab('json',this)">{ } JSON</button>
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="copyJSON()">📋 Copy</button>
-          <button class="btn btn-success btn-sm" onclick="downloadJSON()">⬇ Download</button>
-        </div>
+        <!-- Row 2: hidden — no longer needed -->
+        <div id="edit-toolbar" style="display:none"></div>
       </div>
     </div>
 
@@ -1258,13 +1251,8 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
       <div id="form-preview-container" style="max-width:640px;margin:0 auto"></div>
     </div>
 
-    <!-- JSON Tab -->
-    <div id="tab-json" class="tab-panel">
-      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-        <span style="font-size:0.85rem;color:var(--gray-500)">JSON realtime — cập nhật khi chỉnh sửa</span>
-        <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="copyJSON()">📋 Copy JSON</button>
-        <button class="btn btn-success btn-sm" onclick="downloadJSON()">⬇️ Download</button>
-      </div>
+    <!-- JSON Tab (hidden — accessed via ⚙️ only if needed) -->
+    <div id="tab-json" class="tab-panel" style="display:none">
       <pre id="json-display" class="json-preview"></pre>
     </div>
   </main>
