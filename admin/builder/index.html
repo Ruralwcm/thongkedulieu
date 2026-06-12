@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v3.4 — RuralForms Admin</title>
+<title>Form Builder v3.5 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1162,7 +1162,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v3.4</span>
+    <span class="badge">Form Builder v3.5</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1291,8 +1291,17 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
         </div>
       </div>
 
-      <!-- Sheet ID — hidden, default hardcoded -->
-      <input type="hidden" id="cfg-sheet-id" value="1fPH-x33pzVs-lstj-HB6M67sVNApaCwBU3g0vHKtgZ0">
+      <!-- Sheet ID -->
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
+          📊 Google Sheet ID <small style="color:var(--gray-400);font-weight:400">(để xem data submissions)</small>
+        </label>
+        <input type="text" id="cfg-sheet-id" placeholder="1fPH-x33pzVs-lstj-HB6..."
+          style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.88rem;font-family:var(--font);outline:none">
+        <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
+          Lấy từ URL Sheet: …/spreadsheets/d/<b>ID_ở_đây</b>/edit
+        </div>
+      </div>
 
       <hr style="border:none;border-top:1px solid var(--gray-100);margin:4px 0">
 
