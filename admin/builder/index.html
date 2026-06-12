@@ -3,553 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder — RuralForms Admin</title>
+<title>Form Builder v2 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
-/* ── Builder Layout ── */
-.builder-layout {
-  display: flex;
-  gap: 0;
-  min-height: calc(100vh - 64px);
+/* ── CSS Variables (standalone fallback) ── */
+:root {
+  --primary: #1a3c6e;
+  --primary-mid: #2d6abf;
+  --primary-light: #eff6ff;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+  --font: 'Segoe UI', system-ui, sans-serif;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 320px;
-  min-width: 280px;
-  background: white;
-  border-right: 1px solid var(--gray-200);
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
-  overflow-y: auto;
-}
-.sidebar-header {
-  padding: 18px 20px 12px;
-  border-bottom: 1px solid var(--gray-100);
-  background: var(--gray-50);
-}
-.sidebar-header h2 {
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--gray-500);
-}
-.sidebar-body {
-  padding: 16px 20px;
-  flex: 1;
-}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font); background: var(--gray-50); color: var(--gray-800); }
 
-/* Form group */
-.form-group {
-  margin-bottom: 14px;
-}
-.form-group label {
-  display: block;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--gray-600);
-  margin-bottom: 5px;
-}
-.form-group input,
-.form-group textarea,
-.form-group select {
-  width: 100%;
-  padding: 8px 11px;
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-family: var(--font);
-  color: var(--gray-800);
-  background: white;
-  transition: border-color 0.15s;
-  outline: none;
-}
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  border-color: var(--primary-mid);
-  box-shadow: 0 0 0 3px rgba(45,106,191,0.1);
-}
-.form-group textarea { resize: vertical; min-height: 60px; }
-
-.validity-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.validity-row input[type="date"] { flex: 1; }
-.validity-row .sep { color: var(--gray-400); font-size: 0.85rem; white-space: nowrap; }
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-}
-.toggle-row label { margin: 0; font-size: 0.9rem; color: var(--gray-700); font-weight: 500; }
-
-/* Toggle switch */
-.toggle-switch {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
-}
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-switch .slider {
-  position: absolute;
-  inset: 0;
-  background: var(--gray-300);
-  border-radius: 24px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.toggle-switch .slider::before {
-  content: '';
-  position: absolute;
-  width: 18px; height: 18px;
-  left: 3px; top: 3px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-.toggle-switch input:checked + .slider { background: var(--success); }
-.toggle-switch input:checked + .slider::before { transform: translateX(20px); }
-
-/* Main area */
-.main-area {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-}
-.main-area-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.main-area-header h2 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--gray-800);
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--gray-100);
-  padding: 4px;
-  border-radius: var(--radius-sm);
-}
-.tab-btn {
-  padding: 6px 16px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--gray-500);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.tab-btn.active {
-  background: white;
-  color: var(--primary);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-/* Action buttons bar */
-.action-bar {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: var(--font);
-  white-space: nowrap;
-}
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-mid); }
-.btn-secondary { background: var(--gray-100); color: var(--gray-700); border: 1.5px solid var(--gray-200); }
-.btn-secondary:hover { background: var(--gray-200); }
-.btn-success { background: var(--success); color: white; }
-.btn-success:hover { background: #0ea271; }
-.btn-danger { background: var(--danger); color: white; }
-.btn-sm { padding: 5px 10px; font-size: 0.82rem; }
-.btn-icon { padding: 6px 8px; font-size: 1rem; line-height: 1; }
-
-/* Section card */
-.section-card {
-  background: white;
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-}
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
-  color: white;
-}
-.section-title-input {
-  flex: 1;
-  background: rgba(255,255,255,0.2);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  font-family: var(--font);
-  outline: none;
-}
-.section-title-input::placeholder { color: rgba(255,255,255,0.6); }
-.section-title-input:focus { border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.25); }
-.section-id-badge {
-  font-size: 0.75rem;
-  opacity: 0.75;
-  background: rgba(255,255,255,0.2);
-  padding: 3px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-.section-body {
-  padding: 12px 16px;
-}
-
-/* Field card */
-.field-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  margin-bottom: 8px;
-  background: var(--gray-50);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.field-card:hover { border-color: var(--primary-mid); background: var(--primary-light); }
-.field-card.editing { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 3px rgba(45,106,191,0.12); }
-.field-type-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: var(--primary-light);
-  color: var(--primary);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.field-info { flex: 1; min-width: 0; }
-.field-label { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.field-sub { font-size: 0.78rem; color: var(--gray-500); }
-.field-actions { display: flex; gap: 4px; flex-shrink: 0; }
-.btn-move {
-  width: 28px; height: 28px;
-  display: flex; align-items: center; justify-content: center;
-  background: white;
-  border: 1.5px solid var(--gray-200);
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--gray-600);
-  transition: all 0.15s;
-}
-.btn-move:hover { background: var(--gray-100); border-color: var(--gray-300); }
-.btn-move:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-delete {
-  width: 28px; height: 28px;
-  display: flex; align-items: center; justify-content: center;
-  background: white;
-  border: 1.5px solid #fca5a5;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--danger);
-  transition: all 0.15s;
-}
-.btn-delete:hover { background: #fee2e2; }
-
-/* Add field zone */
-.add-field-zone {
-  margin-top: 8px;
-  padding: 10px 0 4px;
-  border-top: 1.5px dashed var(--gray-200);
-}
-
-/* Empty section */
-.empty-fields {
-  text-align: center;
-  padding: 20px;
-  color: var(--gray-400);
-  font-size: 0.88rem;
-}
-
-/* Add section button */
-.add-section-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 14px;
-  border: 2px dashed var(--gray-300);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--gray-500);
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: var(--font);
-}
-.add-section-btn:hover { border-color: var(--primary-mid); color: var(--primary); background: var(--primary-light); }
-
-/* Inline field editor */
-.field-editor {
-  margin-top: 8px;
-  background: white;
-  border: 1.5px solid var(--primary-mid);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  display: none;
-}
-.field-editor.open { display: block; }
-.field-editor-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.field-editor-grid .full { grid-column: 1/-1; }
-.field-editor h4 {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--gray-100);
-}
-.field-editor-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--gray-100);
-}
-.editor-label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--gray-600);
-  margin-bottom: 4px;
-}
-.editor-input {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1.5px solid var(--gray-200);
-  border-radius: 6px;
-  font-size: 0.88rem;
-  font-family: var(--font);
-  color: var(--gray-800);
-  outline: none;
-  background: white;
-}
-.editor-input:focus { border-color: var(--primary-mid); box-shadow: 0 0 0 2px rgba(45,106,191,0.08); }
-.editor-checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-}
-.editor-checkbox-row label { font-size: 0.88rem; color: var(--gray-700); cursor: pointer; }
-.editor-checkbox-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
-
-/* JSON preview */
-.json-preview {
-  background: #1e293b;
-  color: #e2e8f0;
-  padding: 20px;
-  border-radius: var(--radius);
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.82rem;
-  line-height: 1.7;
-  overflow-x: auto;
-  white-space: pre;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-.json-preview .key { color: #7dd3fc; }
-.json-preview .str { color: #86efac; }
-.json-preview .num { color: #fda4af; }
-.json-preview .bool { color: #c4b5fd; }
-.json-preview .null { color: #94a3b8; }
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  backdrop-filter: blur(2px);
-}
-.modal-overlay.hidden { display: none; }
-.modal {
-  background: white;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  width: 100%;
-  max-width: 620px; /* tăng từ 540 → 620 */
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: modalIn 0.18s ease;
-}
-@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(-8px); } to { opacity: 1; transform: none; } }
-.modal-header {
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--gray-100);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.modal-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--gray-800); }
-.modal-close {
-  width: 32px; height: 32px;
-  background: var(--gray-100);
-  border: none; border-radius: 6px;
-  cursor: pointer; font-size: 1.1rem;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--gray-600);
-  transition: background 0.15s;
-}
-.modal-close:hover { background: var(--gray-200); }
-.modal-body { padding: 18px 20px; }
-.modal-footer {
-  padding: 14px 20px;
-  border-top: 1px solid var(--gray-100);
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-/* ── Field type picker — Google Forms style ── */
-.field-type-group {
-  margin-bottom: 18px;
-}
-.field-type-group-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--gray-500);
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1.5px solid var(--gray-100);
-}
-.type-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.type-card {
-  padding: 14px 8px 12px;
-  border: 2px solid var(--gray-200);
-  border-radius: 12px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  background: white;
-  position: relative;
-  user-select: none;
-}
-.type-card:hover {
-  border-color: var(--primary-mid);
-  background: var(--primary-light);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(45,106,191,0.15);
-}
-.type-card.selected {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(45,106,191,0.15);
-  transform: translateY(-1px);
-}
-.type-card.selected::after {
-  content: '✓';
-  position: absolute;
-  top: 6px;
-  right: 9px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--primary);
-  line-height: 1;
-}
-.type-card .type-icon { font-size: 2rem; margin-bottom: 6px; line-height: 1; }
-.type-card .type-name { font-size: 0.85rem; font-weight: 700; color: var(--gray-700); }
-.type-card .type-desc { font-size: 0.7rem; color: var(--gray-500); margin-top: 3px; }
-
-/* Config form in modal */
-.config-form { margin-top: 16px; border-top: 1px solid var(--gray-100); padding-top: 14px; }
-.config-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.config-grid .full { grid-column: 1/-1; }
-
-/* Notification */
-.notif {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--gray-800);
-  color: white;
-  padding: 12px 20px;
-  border-radius: var(--radius-sm);
-  font-size: 0.88rem;
-  font-weight: 600;
-  box-shadow: var(--shadow-md);
-  z-index: 2000;
-  animation: notifIn 0.2s ease;
-  max-width: 300px;
-}
-@keyframes notifIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-.notif.success { background: var(--success); }
-.notif.error { background: var(--danger); }
-
-/* Header nav */
+/* ── Header ── */
 .admin-header {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
   color: white;
@@ -560,7 +44,7 @@
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 200;
+  z-index: 300;
   box-shadow: var(--shadow-md);
 }
 .admin-header .logo { display: flex; align-items: center; gap: 10px; }
@@ -585,24 +69,588 @@
 }
 .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
 
-/* Required star */
-.req { color: var(--danger); margin-left: 2px; }
+/* ── Builder Layout ── */
+.builder-layout {
+  display: flex;
+  gap: 0;
+  min-height: calc(100vh - 64px);
+}
 
-/* Scrollbar */
+/* ── Sidebar ── */
+.sidebar {
+  width: 300px;
+  min-width: 260px;
+  background: white;
+  border-right: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+.sidebar-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+.sidebar-header h2 {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gray-500);
+  margin: 0;
+}
+.sidebar-body { padding: 16px 20px; flex: 1; }
+
+.form-group { margin-bottom: 13px; }
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 4px;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  background: white;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary-mid);
+  box-shadow: 0 0 0 3px rgba(45,106,191,0.1);
+}
+.form-group textarea { resize: vertical; min-height: 52px; }
+
+.toggle-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.toggle-row label { margin: 0; font-size: 0.88rem; color: var(--gray-700); font-weight: 500; }
+.toggle-switch { position: relative; width: 42px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-switch .slider {
+  position: absolute; inset: 0;
+  background: var(--gray-300);
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-switch .slider::before {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .slider { background: var(--success); }
+.toggle-switch input:checked + .slider::before { transform: translateX(20px); }
+
+/* ── Main area ── */
+.main-area {
+  flex: 1;
+  padding: 24px 80px 24px 24px; /* right padding for FAB */
+  overflow-y: auto;
+  min-width: 0;
+}
+.main-area-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.main-area-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin: 0;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--gray-100);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+.tab-btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Action bar */
+.action-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+  white-space: nowrap;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-mid); }
+.btn-secondary { background: var(--gray-100); color: var(--gray-700); border: 1.5px solid var(--gray-200); }
+.btn-secondary:hover { background: var(--gray-200); }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #0ea271; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+
+/* ── Section card ── */
+.section-card {
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s;
+}
+.section-card.active-section {
+  border-color: var(--primary-mid);
+  box-shadow: 0 0 0 3px rgba(45,106,191,0.1);
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
+  color: white;
+  cursor: pointer;
+}
+.section-title-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid rgba(255,255,255,0.35);
+  color: white;
+  padding: 4px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: var(--font);
+  outline: none;
+  cursor: text;
+}
+.section-title-input::placeholder { color: rgba(255,255,255,0.55); }
+.section-title-input:focus { border-bottom-color: rgba(255,255,255,0.9); }
+.section-id-badge {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  background: rgba(255,255,255,0.2);
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-section-del {
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.btn-section-del:hover { background: rgba(239,68,68,0.5); }
+
+.section-body { padding: 12px; }
+
+.empty-fields {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-400);
+  font-size: 0.85rem;
+}
+
+/* ── Field card — Google Forms style ── */
+.field-card-wrap {
+  margin-bottom: 8px;
+}
+
+/* Collapsed state */
+.field-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.field-card:hover { border-color: var(--primary-mid); background: #f0f7ff; }
+.field-card.is-expanded {
+  background: var(--primary-light);
+  border-color: var(--primary-mid);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+}
+.field-drag-handle {
+  color: var(--gray-400);
+  font-size: 1rem;
+  cursor: grab;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.field-type-icon { font-size: 1.1rem; flex-shrink: 0; }
+.field-card-label {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.field-req-star { color: var(--danger); margin-left: 2px; font-size: 0.85rem; }
+.field-card-menu {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.field-card-menu button {
+  width: 26px; height: 26px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.field-card-menu button:hover { background: var(--gray-200); color: var(--gray-800); }
+.field-card-menu button:disabled { opacity: 0.25; cursor: not-allowed; }
+.field-card-menu button.del-btn:hover { background: #fee2e2; color: var(--danger); }
+
+/* ── Inline editor (expanded) ── */
+.field-editor {
+  display: none;
+  border: 1.5px solid var(--primary-mid);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+  background: white;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(45,106,191,0.12);
+}
+.field-editor.open { display: block; }
+
+.fe-label-input {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid var(--gray-300);
+  padding: 6px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--gray-800);
+  outline: none;
+  background: transparent;
+  margin-bottom: 14px;
+  transition: border-color 0.15s;
+}
+.fe-label-input:focus { border-bottom-color: var(--primary-mid); }
+.fe-label-input::placeholder { color: var(--gray-400); font-weight: 400; }
+
+.fe-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.fe-type-select {
+  flex: 1;
+  min-width: 160px;
+  padding: 7px 10px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  background: white;
+  outline: none;
+  cursor: pointer;
+}
+.fe-type-select:focus { border-color: var(--primary-mid); }
+
+/* Required toggle inside editor */
+.fe-required-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.fe-required-toggle span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+/* Config fields */
+.fe-config {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.fe-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.fe-config-grid .full { grid-column: 1 / -1; }
+
+.fe-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.fe-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: var(--font);
+  color: var(--gray-800);
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.fe-input:focus { border-color: var(--primary-mid); box-shadow: 0 0 0 2px rgba(45,106,191,0.08); }
+textarea.fe-input { resize: vertical; min-height: 80px; }
+
+.fe-check-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.fe-check-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
+.fe-check-row label { font-size: 0.85rem; color: var(--gray-700); cursor: pointer; }
+
+.fe-info-badge {
+  padding: 8px 12px;
+  background: var(--primary-light);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* Editor footer actions */
+.fe-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+}
+.fe-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.12s;
+}
+.fe-btn-danger { background: #fee2e2; color: var(--danger); }
+.fe-btn-danger:hover { background: var(--danger); color: white; }
+.fe-btn-move { background: var(--gray-100); color: var(--gray-700); border: 1.5px solid var(--gray-200); }
+.fe-btn-move:hover { background: var(--gray-200); }
+.fe-btn-move:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Add section button ── */
+.add-section-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+.add-section-btn:hover { border-color: var(--primary-mid); color: var(--primary); background: var(--primary-light); }
+
+/* ── Floating Action Bar ── */
+.fab-bar {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 200;
+}
+.fab-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  position: relative;
+}
+.fab-btn:hover {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(45,106,191,0.3);
+}
+.fab-btn .fab-tooltip {
+  position: absolute;
+  right: 58px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--gray-800);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  font-family: var(--font);
+}
+.fab-btn .fab-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-left-color: var(--gray-800);
+}
+.fab-btn:hover .fab-tooltip { opacity: 1; }
+
+/* ── JSON Preview ── */
+.json-preview {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 20px;
+  border-radius: var(--radius);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.json-preview .key { color: #7dd3fc; }
+.json-preview .str { color: #86efac; }
+.json-preview .num { color: #fda4af; }
+.json-preview .bool { color: #c4b5fd; }
+.json-preview .null { color: #94a3b8; }
+
+/* ── Notification ── */
+.notif {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--gray-800);
+  color: white;
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  z-index: 2000;
+  animation: notifIn 0.2s ease;
+  max-width: 280px;
+}
+@keyframes notifIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.notif.success { background: var(--success); }
+.notif.error { background: var(--danger); }
+
+/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--gray-100); }
 ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* ── Required asterisk ── */
+.req { color: var(--danger); margin-left: 2px; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
   .builder-layout { flex-direction: column; }
-  .sidebar { width: 100%; position: static; height: auto; max-height: none; }
-  .main-area { padding: 16px; }
-  .config-grid, .field-editor-grid { grid-template-columns: 1fr; }
-  .config-grid .full, .field-editor-grid .full { grid-column: 1; }
-  .type-grid { grid-template-columns: repeat(2, 1fr); }
-  .admin-header nav { display: none; }
+  .sidebar { width: 100%; position: static; height: auto; }
+  .main-area { padding: 16px 72px 16px 16px; }
+  .fab-bar { right: 12px; }
+}
+@media (max-width: 600px) {
+  .main-area { padding: 12px 64px 12px 12px; }
+  .fe-config-grid { grid-template-columns: 1fr; }
+  .fe-config-grid .full { grid-column: 1; }
 }
 </style>
 </head>
@@ -612,7 +660,7 @@
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder</span>
+    <span class="badge">Form Builder v2</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -620,16 +668,15 @@
   </nav>
 </header>
 
-<!-- Builder Layout -->
+<!-- Layout -->
 <div class="builder-layout">
 
-  <!-- Sidebar: Form Metadata -->
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <h2>⚙️ Cấu hình form</h2>
     </div>
     <div class="sidebar-body">
-
       <div class="form-group">
         <label>Form ID (slug) <span class="req">*</span></label>
         <input type="text" id="meta-id" placeholder="vd: mat-tien" oninput="updatePreview()">
@@ -646,7 +693,6 @@
         <label>Webhook URL</label>
         <input type="url" id="meta-webhook" placeholder="https://script.google.com/..." oninput="updatePreview()">
       </div>
-
       <div class="form-group">
         <label>Hiệu lực từ ngày</label>
         <input type="date" id="meta-valid-from" oninput="updatePreview()">
@@ -655,7 +701,6 @@
         <label>Hiệu lực đến ngày <small style="color:var(--gray-400)">(để trống = vô thời hạn)</small></label>
         <input type="date" id="meta-valid-to" oninput="updatePreview()">
       </div>
-
       <div class="toggle-row">
         <label class="toggle-switch">
           <input type="checkbox" id="meta-active" checked onchange="updatePreview()">
@@ -664,7 +709,7 @@
         <label for="meta-active" style="cursor:pointer">Trạng thái: <strong id="active-label">Bật</strong></label>
       </div>
 
-      <hr style="border:none;border-top:1px solid var(--gray-200);margin:16px 0">
+      <hr style="border:none;border-top:1px solid var(--gray-200);margin:14px 0">
 
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-primary" onclick="openLoadSample()">📂 Load mẫu mat-tien</button>
@@ -673,15 +718,14 @@
     </div>
   </aside>
 
-  <!-- Main: Sections & Fields -->
-  <main class="main-area">
+  <!-- Main -->
+  <main class="main-area" id="main-area">
     <div class="main-area-header">
       <h2 id="form-title-display">Chưa có tên form</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <!-- Tabs -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <div class="tabs">
           <button class="tab-btn active" onclick="switchTab('builder',this)">✏️ Builder</button>
-          <button class="tab-btn" onclick="switchTab('preview',this)">{ } JSON Preview</button>
+          <button class="tab-btn" onclick="switchTab('preview',this)">{ } JSON</button>
         </div>
         <div class="action-bar">
           <button class="btn btn-secondary btn-sm" onclick="copyJSON()">📋 Copy</button>
@@ -694,14 +738,14 @@
     <div id="tab-builder" class="tab-panel active">
       <div id="sections-container"></div>
       <button class="add-section-btn" onclick="addSection()">
-        <span style="font-size:1.3rem">＋</span> Thêm Section
+        <span style="font-size:1.2rem">＋</span> Thêm Section
       </button>
     </div>
 
-    <!-- JSON Preview Tab -->
+    <!-- JSON Tab -->
     <div id="tab-preview" class="tab-panel">
       <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-        <span style="font-size:0.88rem;color:var(--gray-500)">Preview realtime — cập nhật khi bạn chỉnh sửa</span>
+        <span style="font-size:0.85rem;color:var(--gray-500)">Preview realtime — cập nhật khi chỉnh sửa</span>
         <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="copyJSON()">📋 Copy JSON</button>
         <button class="btn btn-success btn-sm" onclick="downloadJSON()">⬇️ Download</button>
       </div>
@@ -710,80 +754,75 @@
   </main>
 </div>
 
-<!-- Modal: Add Field -->
-<div id="modal-add-field" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>➕ Thêm Field mới</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="type-grid-container"></div>
-      <div class="config-form" id="modal-config-form" style="display:none"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Hủy</button>
-      <button class="btn btn-primary" id="btn-confirm-add" onclick="confirmAddField()" disabled>✓ Thêm field</button>
-    </div>
-  </div>
+<!-- Floating Action Bar -->
+<div class="fab-bar" id="fab-bar">
+  <button class="fab-btn" onclick="fabAddField()" title="Thêm field">
+    ➕
+    <span class="fab-tooltip">Thêm field</span>
+  </button>
+  <button class="fab-btn" onclick="addSection()" title="Thêm section">
+    📑
+    <span class="fab-tooltip">Thêm section</span>
+  </button>
 </div>
 
 <!-- Notification -->
 <div id="notif" class="notif" style="display:none"></div>
 
 <script>
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // STATE
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 let sections = [];
-let addingToSectionId = null;
-let selectedType = null;
-let editingField = null; // {sectionId, fieldId}
+let activeSectionId = null;   // section đang được focus
+let expandedFieldId = null;   // field đang expand (globally unique)
 let sectionCounter = 0;
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // FIELD TYPE DEFINITIONS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 const FIELD_TYPES = [
-  { type: 'text',                icon: '📝', name: 'Text',        desc: 'Nhập văn bản' },
-  { type: 'number',              icon: '🔢', name: 'Number',      desc: 'Số / đơn vị' },
-  { type: 'textarea',            icon: '📄', name: 'Textarea',    desc: 'Văn bản dài' },
-  { type: 'phone_vn',            icon: '📱', name: 'Phone VN',    desc: '09x/08x/03x' },
-  { type: 'email',               icon: '✉️', name: 'Email',       desc: 'Địa chỉ email' },
-  { type: 'dropdown_static',     icon: '📋', name: 'Dropdown',    desc: 'Danh sách tĩnh' },
-  { type: 'dropdown_storeslist', icon: '🏪', name: 'Stores List', desc: 'GĐV/QLKV/CH' },
-  { type: 'image',               icon: '📷', name: 'Image',       desc: 'Upload ảnh' },
-  { type: 'date',                icon: '📅', name: 'Date',        desc: 'Chọn ngày' },
+  { type: 'text',                icon: '📝', name: 'Text ngắn',    group: 'text' },
+  { type: 'textarea',            icon: '📄', name: 'Đoạn văn',     group: 'text' },
+  { type: 'phone_vn',            icon: '📱', name: 'Số điện thoại',group: 'text' },
+  { type: 'email',               icon: '✉️', name: 'Email',        group: 'text' },
+  { type: 'number',              icon: '🔢', name: 'Số',           group: 'number' },
+  { type: 'dropdown_static',     icon: '📋', name: 'Trắc nghiệm',  group: 'choice' },
+  { type: 'dropdown_storeslist', icon: '🏪', name: 'Danh sách CH', group: 'choice' },
+  { type: 'image',               icon: '📷', name: 'Tải ảnh lên',  group: 'special' },
+  { type: 'date',                icon: '📅', name: 'Ngày',         group: 'special' },
 ];
 
-// Nhóm field theo loại — giống Google Forms
-const FIELD_TYPE_GROUPS = [
-  {
-    label: '📝 Văn bản & Số',
-    types: ['text', 'number', 'textarea', 'phone_vn', 'email']
-  },
-  {
-    label: '📋 Lựa chọn & Đặc biệt',
-    types: ['dropdown_static', 'dropdown_storeslist', 'image', 'date']
-  }
-];
-
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // SECTION MANAGEMENT
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function addSection(data) {
   sectionCounter++;
   const id = data?.id || `s${sectionCounter}`;
   const title = data?.title || `Section ${sectionCounter}`;
-  const fields = data?.fields || [];
+  const fields = data?.fields ? data.fields.map(f => ({...f})) : [];
   sections.push({ id, title, fields });
+  activeSectionId = id;
+  expandedFieldId = null;
   renderSections();
   updatePreview();
+  // Scroll to new section
+  if (!data) {
+    setTimeout(() => {
+      const el = document.getElementById(`sec-${id}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
 }
 
 function deleteSection(sectionId) {
   if (!confirm('Xóa section này và tất cả fields bên trong?')) return;
   sections = sections.filter(s => s.id !== sectionId);
+  if (activeSectionId === sectionId) activeSectionId = sections[sections.length - 1]?.id || null;
+  if (expandedFieldId) {
+    const found = sections.some(s => s.fields.some(f => f.id === expandedFieldId));
+    if (!found) expandedFieldId = null;
+  }
   renderSections();
   updatePreview();
 }
@@ -793,344 +832,58 @@ function updateSectionTitle(sectionId, title) {
   if (s) { s.title = title; updatePreview(); }
 }
 
-// ═══════════════════════════════════════════
+function setActiveSection(sectionId) {
+  activeSectionId = sectionId;
+  // Re-render section borders only
+  document.querySelectorAll('.section-card').forEach(el => {
+    el.classList.toggle('active-section', el.id === `sec-${sectionId}`);
+  });
+}
+
+// ═══════════════════════════════════════════════════
 // FIELD MANAGEMENT
-// ═══════════════════════════════════════════
-function openAddFieldModal(sectionId) {
-  addingToSectionId = sectionId;
-  selectedType = null;
-  editingField = null;
-  document.getElementById('modal-config-form').style.display = 'none';
-  document.getElementById('modal-config-form').innerHTML = '';
-  document.getElementById('btn-confirm-add').disabled = true;
-  renderTypeGrid();
-  document.getElementById('modal-add-field').classList.remove('hidden');
-  document.querySelector('#modal-add-field .modal-header h3').textContent = '➕ Thêm Field mới';
-  document.getElementById('btn-confirm-add').textContent = '✓ Thêm field';
-}
-
-function renderTypeGrid() {
-  const container = document.getElementById('type-grid-container');
-  container.innerHTML = FIELD_TYPE_GROUPS.map(group => `
-    <div class="field-type-group">
-      <div class="field-type-group-label">${group.label}</div>
-      <div class="type-grid">
-        ${group.types.map(typeId => {
-          const ft = FIELD_TYPES.find(t => t.type === typeId);
-          if (!ft) return '';
-          return `
-            <div class="type-card ${selectedType === ft.type ? 'selected' : ''}" onclick="selectType('${ft.type}')">
-              <div class="type-icon">${ft.icon}</div>
-              <div class="type-name">${ft.name}</div>
-              <div class="type-desc">${ft.desc}</div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-function selectType(type) {
-  selectedType = type;
-  renderTypeGrid();
-  renderConfigForm(type);
-  document.getElementById('btn-confirm-add').disabled = false;
-}
-
-function renderConfigForm(type, existing) {
-  const container = document.getElementById('modal-config-form');
-  container.style.display = 'block';
-  const e = existing || {};
-
-  let html = `<div class="config-grid">
-    <div class="full">
-      <label class="editor-label">Field ID <span class="req">*</span></label>
-      <input class="editor-input" id="cfg-id" type="text" placeholder="vd: ten_field" value="${e.id||''}">
-    </div>
-    <div class="full">
-      <label class="editor-label">Label (nhãn hiển thị) <span class="req">*</span></label>
-      <input class="editor-input" id="cfg-label" type="text" placeholder="vd: Mặt kính KV CHT" value="${e.label||''}">
-    </div>`;
-
-  switch(type) {
-    case 'text':
-      html += `
-    <div>
-      <label class="editor-label">Min length</label>
-      <input class="editor-input" id="cfg-min-len" type="number" min="0" placeholder="0" value="${e.validate?.min_length||''}">
-    </div>
-    <div>
-      <label class="editor-label">Max length</label>
-      <input class="editor-input" id="cfg-max-len" type="number" min="0" placeholder="255" value="${e.validate?.max_length||''}">
-    </div>
-    <div class="full">
-      <label class="editor-label">Placeholder</label>
-      <input class="editor-input" id="cfg-placeholder" type="text" placeholder="Gợi ý nhập liệu..." value="${e.placeholder||''}">
-    </div>`;
-      break;
-
-    case 'textarea':
-      html += `
-    <div>
-      <label class="editor-label">Min length</label>
-      <input class="editor-input" id="cfg-min-len" type="number" min="0" value="${e.validate?.min_length||''}">
-    </div>
-    <div>
-      <label class="editor-label">Max length</label>
-      <input class="editor-input" id="cfg-max-len" type="number" min="0" value="${e.validate?.max_length||''}">
-    </div>
-    <div class="full">
-      <label class="editor-label">Placeholder</label>
-      <input class="editor-input" id="cfg-placeholder" type="text" value="${e.placeholder||''}">
-    </div>`;
-      break;
-
-    case 'number':
-      html += `
-    <div>
-      <label class="editor-label">Min</label>
-      <input class="editor-input" id="cfg-num-min" type="number" placeholder="0" value="${e.validate?.min ?? ''}">
-    </div>
-    <div>
-      <label class="editor-label">Max</label>
-      <input class="editor-input" id="cfg-num-max" type="number" placeholder="9999" value="${e.validate?.max ?? ''}">
-    </div>
-    <div>
-      <label class="editor-label">Cảnh báo trên ngưỡng (warn_above)</label>
-      <input class="editor-input" id="cfg-warn-above" type="number" placeholder="vd: 400" value="${e.validate?.warn_above ?? ''}">
-    </div>
-    <div>
-      <label class="editor-label">Đơn vị</label>
-      <select class="editor-input" id="cfg-unit">
-        <option value="">-- chọn --</option>
-        ${['cm','m','kg','%','pcs','đ'].map(u=>`<option value="${u}" ${(e.unit||'')==u?'selected':''}>${u}</option>`).join('')}
-        <option value="__custom__" ${e.unit&&!['cm','m','kg','%','pcs','đ'].includes(e.unit)?'selected':''}>Khác...</option>
-      </select>
-    </div>
-    <div class="full" id="custom-unit-wrap" style="${e.unit&&!['cm','m','kg','%','pcs','đ'].includes(e.unit)?'':'display:none'}">
-      <label class="editor-label">Đơn vị tùy chỉnh</label>
-      <input class="editor-input" id="cfg-unit-custom" type="text" placeholder="vd: lần" value="${e.unit&&!['cm','m','kg','%','pcs','đ'].includes(e.unit)?e.unit:''}">
-    </div>`;
-      break;
-
-    case 'dropdown_static':
-      html += `
-    <div class="full">
-      <label class="editor-label">Danh sách options <small style="color:var(--gray-400)">(mỗi dòng 1 option)</small></label>
-      <textarea class="editor-input" id="cfg-options" rows="5" placeholder="Tùy chọn 1&#10;Tùy chọn 2&#10;Tùy chọn 3">${(e.options||[]).join('\n')}</textarea>
-    </div>`;
-      break;
-
-    case 'dropdown_storeslist':
-      html += `
-    <div>
-      <label class="editor-label">Source type <span class="req">*</span></label>
-      <select class="editor-input" id="cfg-source">
-        <option value="">-- chọn --</option>
-        <option value="gdv" ${(e.source||'')==='gdv'?'selected':''}>GĐV (Giám đốc Vùng)</option>
-        <option value="qlkv" ${(e.source||'')==='qlkv'?'selected':''}>QLKV (Quản lý Khu vực)</option>
-        <option value="ch" ${(e.source||'')==='ch'?'selected':''}>CH (Cửa hàng)</option>
-      </select>
-    </div>
-    <div>
-      <label class="editor-label">Depends on (field ID)</label>
-      <input class="editor-input" id="cfg-depends-on" type="text" placeholder="vd: gdv (nếu cascade)" value="${e.depends_on||''}">
-    </div>`;
-      break;
-
-    case 'image':
-      html += `
-    <div>
-      <label class="editor-label">Min files</label>
-      <input class="editor-input" id="cfg-min-files" type="number" min="0" placeholder="1" value="${e.validate?.min_files ?? ''}">
-    </div>
-    <div>
-      <label class="editor-label">Max files</label>
-      <input class="editor-input" id="cfg-max-files" type="number" min="1" placeholder="5" value="${e.validate?.max_files ?? ''}">
-    </div>
-    <div class="full">
-      <label class="editor-label">Max dung lượng/ảnh (KB) — tự động resize</label>
-      <input class="editor-input" id="cfg-max-kb" type="number" min="50" placeholder="200" value="${e.validate?.max_kb ?? ''}">
-    </div>`;
-      break;
-
-    case 'date':
-      html += `
-    <div>
-      <label class="editor-label">Min date</label>
-      <input class="editor-input" id="cfg-min-date" type="date" value="${e.validate?.min_date||''}">
-    </div>
-    <div>
-      <label class="editor-label">Max date</label>
-      <input class="editor-input" id="cfg-max-date" type="date" value="${e.validate?.max_date||''}">
-    </div>
-    <div>
-      <label class="editor-label" style="cursor:pointer">
-        <input type="checkbox" id="cfg-no-past" ${e.validate?.no_past?'checked':''} style="margin-right:6px;accent-color:var(--primary)">
-        Không cho chọn ngày quá khứ
-      </label>
-    </div>
-    <div>
-      <label class="editor-label" style="cursor:pointer">
-        <input type="checkbox" id="cfg-no-future" ${e.validate?.no_future?'checked':''} style="margin-right:6px;accent-color:var(--primary)">
-        Không cho chọn ngày tương lai
-      </label>
-    </div>`;
-      break;
-
-    case 'email':
-      html += `
-    <div class="full">
-      <label class="editor-label">Domain whitelist <small style="color:var(--gray-400)">(cách nhau bằng dấu phẩy, để trống = chấp nhận tất cả)</small></label>
-      <input class="editor-input" id="cfg-domain-whitelist" type="text" placeholder="gmail.com, company.com" value="${(e.domain_whitelist||[]).join(', ')}">
-    </div>`;
-      break;
-
-    case 'phone_vn':
-      html += `<div class="full" style="padding:8px;background:var(--gray-50);border-radius:6px;font-size:0.85rem;color:var(--gray-500)">
-        ✅ Validate format: 09x / 08x / 03x / 07x (10 chữ số)
-      </div>`;
-      break;
+// ═══════════════════════════════════════════════════
+function fabAddField() {
+  const targetId = activeSectionId || (sections.length > 0 ? sections[sections.length - 1].id : null);
+  if (!targetId) {
+    showNotif('Thêm section trước đã', 'error');
+    return;
   }
-
-  html += `
-    <div class="full">
-      <label class="editor-label" style="cursor:pointer;display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="cfg-required" ${e.required!==false?'checked':''} style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer">
-        <span>Bắt buộc nhập (required)</span>
-      </label>
-    </div>`;
-
-  html += '</div>';
-  container.innerHTML = html;
-
-  const unitSel = document.getElementById('cfg-unit');
-  if (unitSel) {
-    unitSel.addEventListener('change', () => {
-      const wrap = document.getElementById('custom-unit-wrap');
-      if (wrap) wrap.style.display = unitSel.value === '__custom__' ? '' : 'none';
-    });
-  }
+  addFieldToSection(targetId);
 }
 
-function collectFieldConfig() {
-  const id = document.getElementById('cfg-id')?.value.trim();
-  const label = document.getElementById('cfg-label')?.value.trim();
-  const required = document.getElementById('cfg-required')?.checked ?? true;
-
-  if (!id || !label) { showNotif('Vui lòng nhập Field ID và Label', 'error'); return null; }
-  if (!/^[a-z0-9_-]+$/.test(id)) { showNotif('Field ID chỉ dùng chữ thường, số, _ -', 'error'); return null; }
-
-  const field = { id, type: selectedType, label, required };
-
-  switch(selectedType) {
-    case 'text':
-    case 'textarea': {
-      const minLen = document.getElementById('cfg-min-len')?.value;
-      const maxLen = document.getElementById('cfg-max-len')?.value;
-      const placeholder = document.getElementById('cfg-placeholder')?.value;
-      if (placeholder) field.placeholder = placeholder;
-      const validate = {};
-      if (minLen) validate.min_length = parseInt(minLen);
-      if (maxLen) validate.max_length = parseInt(maxLen);
-      if (Object.keys(validate).length) field.validate = validate;
-      break;
-    }
-    case 'number': {
-      const min = document.getElementById('cfg-num-min')?.value;
-      const max = document.getElementById('cfg-num-max')?.value;
-      const warnAbove = document.getElementById('cfg-warn-above')?.value;
-      let unit = document.getElementById('cfg-unit')?.value;
-      if (unit === '__custom__') unit = document.getElementById('cfg-unit-custom')?.value.trim() || '';
-      if (unit) field.unit = unit;
-      const validate = {};
-      if (min !== '') validate.min = parseFloat(min);
-      if (max !== '') validate.max = parseFloat(max);
-      if (warnAbove !== '') validate.warn_above = parseFloat(warnAbove);
-      if (Object.keys(validate).length) field.validate = validate;
-      break;
-    }
-    case 'dropdown_static': {
-      const rawOptions = document.getElementById('cfg-options')?.value || '';
-      field.options = rawOptions.split('\n').map(s=>s.trim()).filter(Boolean);
-      break;
-    }
-    case 'dropdown_storeslist': {
-      const source = document.getElementById('cfg-source')?.value;
-      if (!source) { showNotif('Chọn source type (gdv/qlkv/ch)', 'error'); return null; }
-      field.source = source;
-      const dependsOn = document.getElementById('cfg-depends-on')?.value.trim();
-      if (dependsOn) field.depends_on = dependsOn;
-      break;
-    }
-    case 'image': {
-      const minFiles = document.getElementById('cfg-min-files')?.value;
-      const maxFiles = document.getElementById('cfg-max-files')?.value;
-      const maxKb = document.getElementById('cfg-max-kb')?.value;
-      const validate = {};
-      if (minFiles) validate.min_files = parseInt(minFiles);
-      if (maxFiles) validate.max_files = parseInt(maxFiles);
-      if (maxKb) validate.max_kb = parseInt(maxKb);
-      if (Object.keys(validate).length) field.validate = validate;
-      break;
-    }
-    case 'date': {
-      const minDate = document.getElementById('cfg-min-date')?.value;
-      const maxDate = document.getElementById('cfg-max-date')?.value;
-      const noPast = document.getElementById('cfg-no-past')?.checked;
-      const noFuture = document.getElementById('cfg-no-future')?.checked;
-      const validate = {};
-      if (minDate) validate.min_date = minDate;
-      if (maxDate) validate.max_date = maxDate;
-      if (noPast) validate.no_past = true;
-      if (noFuture) validate.no_future = true;
-      if (Object.keys(validate).length) field.validate = validate;
-      break;
-    }
-    case 'email': {
-      const raw = document.getElementById('cfg-domain-whitelist')?.value || '';
-      const domains = raw.split(',').map(s=>s.trim()).filter(Boolean);
-      if (domains.length) field.domain_whitelist = domains;
-      break;
-    }
-    case 'phone_vn':
-      break;
-  }
-
-  return field;
-}
-
-function confirmAddField() {
-  const field = collectFieldConfig();
-  if (!field) return;
-
-  const section = sections.find(s => s.id === addingToSectionId);
+function addFieldToSection(sectionId) {
+  const section = sections.find(s => s.id === sectionId);
   if (!section) return;
+  setActiveSection(sectionId);
 
-  if (editingField) {
-    const idx = section.fields.findIndex(f => f.id === editingField.fieldId);
-    if (idx >= 0) section.fields[idx] = field;
-  } else {
-    if (section.fields.some(f => f.id === field.id)) {
-      showNotif('Field ID đã tồn tại trong section này', 'error'); return;
-    }
-    section.fields.push(field);
-  }
+  // Generate unique field id
+  let newId, idx = section.fields.length + 1;
+  do { newId = `field_${idx++}`; } while (section.fields.some(f => f.id === newId));
 
-  closeModal();
+  const newField = { id: newId, type: 'text', label: '', required: true };
+  section.fields.push(newField);
+  expandedFieldId = newField.id;
   renderSections();
   updatePreview();
-  showNotif(editingField ? '✅ Đã cập nhật field' : '✅ Đã thêm field', 'success');
-  editingField = null;
+
+  // Auto-focus label input
+  setTimeout(() => {
+    const inp = document.getElementById(`fe-label-${newField.id}`);
+    if (inp) { inp.focus(); inp.select(); }
+    const el = document.getElementById(`fc-wrap-${newField.id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 30);
 }
 
 function deleteField(sectionId, fieldId) {
   const section = sections.find(s => s.id === sectionId);
   if (!section) return;
   section.fields = section.fields.filter(f => f.id !== fieldId);
+  if (expandedFieldId === fieldId) expandedFieldId = null;
   renderSections();
   updatePreview();
+  showNotif('🗑️ Đã xóa field', '');
 }
 
 function moveField(sectionId, fieldId, dir) {
@@ -1140,145 +893,489 @@ function moveField(sectionId, fieldId, dir) {
   if (idx < 0) return;
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= section.fields.length) return;
-  const tmp = section.fields[idx];
-  section.fields[idx] = section.fields[newIdx];
-  section.fields[newIdx] = tmp;
+  [section.fields[idx], section.fields[newIdx]] = [section.fields[newIdx], section.fields[idx]];
   renderSections();
   updatePreview();
 }
 
-function openEditField(sectionId, fieldId) {
-  const section = sections.find(s => s.id === sectionId);
-  if (!section) return;
-  const field = section.fields.find(f => f.id === fieldId);
-  if (!field) return;
-
-  addingToSectionId = sectionId;
-  editingField = { sectionId, fieldId };
-  selectedType = field.type;
-
-  document.querySelector('#modal-add-field .modal-header h3').textContent = '✏️ Chỉnh sửa Field';
-  document.getElementById('btn-confirm-add').textContent = '✓ Lưu thay đổi';
-  document.getElementById('btn-confirm-add').disabled = false;
-
-  renderTypeGrid();
-  renderConfigForm(field.type, field);
-  document.getElementById('modal-add-field').classList.remove('hidden');
-}
-
-function closeModal() {
-  document.getElementById('modal-add-field').classList.add('hidden');
-  selectedType = null;
-  editingField = null;
-}
-
-// ═══════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════
-function renderSections() {
-  const container = document.getElementById('sections-container');
-
-  if (sections.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--gray-400)">
-      <div style="font-size:2.5rem;margin-bottom:8px">📋</div>
-      <p>Chưa có section nào. Nhấn "Thêm Section" để bắt đầu.</p>
-    </div>`;
-    return;
+function expandField(fieldId) {
+  if (expandedFieldId === fieldId) {
+    expandedFieldId = null;
+  } else {
+    expandedFieldId = fieldId;
   }
-
-  container.innerHTML = sections.map((section, sIdx) => `
-    <div class="section-card" id="sec-${section.id}">
-      <div class="section-header">
-        <input class="section-title-input" type="text" value="${escHtml(section.title)}"
-          oninput="updateSectionTitle('${section.id}', this.value)" placeholder="Tên section...">
-        <span class="section-id-badge">${escHtml(section.id)}</span>
-        <button class="btn btn-icon" style="background:rgba(255,255,255,0.15);border:none;color:white;cursor:pointer;border-radius:6px"
-          title="Xóa section" onclick="deleteSection('${section.id}')">🗑️</button>
-      </div>
-      <div class="section-body">
-        ${section.fields.length === 0
-          ? `<div class="empty-fields">Chưa có field nào trong section này</div>`
-          : section.fields.map((field, fIdx) => renderFieldCard(section, field, fIdx)).join('')
-        }
-        <div class="add-field-zone">
-          <button class="btn btn-secondary btn-sm" onclick="openAddFieldModal('${section.id}')">
-            ＋ Thêm field
-          </button>
-        </div>
-      </div>
-    </div>
-  `).join('');
+  renderSections();
 }
 
-function renderFieldCard(section, field, idx) {
-  const ft = FIELD_TYPES.find(t => t.type === field.type);
-  const icon = ft?.icon || '📌';
-  const subtitle = getFieldSubtitle(field);
-  const isFirst = idx === 0;
-  const isLast = idx === section.fields.length - 1;
-
-  return `
-    <div class="field-card" id="fc-${section.id}-${field.id}" onclick="openEditField('${section.id}','${field.id}')">
-      <span class="field-type-badge">${icon} ${field.type}</span>
-      <div class="field-info">
-        <div class="field-label">${escHtml(field.label)}${field.required ? ' <span style="color:var(--danger)">*</span>' : ''}</div>
-        <div class="field-sub">${subtitle}</div>
-      </div>
-      <div class="field-actions" onclick="event.stopPropagation()">
-        <button class="btn-move" title="Lên" onclick="moveField('${section.id}','${field.id}',-1)" ${isFirst?'disabled':''}>↑</button>
-        <button class="btn-move" title="Xuống" onclick="moveField('${section.id}','${field.id}',1)" ${isLast?'disabled':''}>↓</button>
-        <button class="btn-delete" title="Xóa field" onclick="deleteField('${section.id}','${field.id}')">✕</button>
-      </div>
-    </div>
-  `;
+function collapseAll() {
+  if (expandedFieldId !== null) {
+    expandedFieldId = null;
+    renderSections();
+  }
 }
 
-function getFieldSubtitle(field) {
-  switch(field.type) {
-    case 'number': {
-      const parts = [];
-      if (field.unit) parts.push(`Đơn vị: ${field.unit}`);
-      if (field.validate?.min !== undefined) parts.push(`min: ${field.validate.min}`);
-      if (field.validate?.max !== undefined) parts.push(`max: ${field.validate.max}`);
-      if (field.validate?.warn_above !== undefined) parts.push(`⚠️ warn > ${field.validate.warn_above}`);
-      return parts.join(' · ') || 'Số';
+// ═══════════════════════════════════════════════════
+// LIVE FIELD UPDATE (no re-render, direct DOM)
+// ═══════════════════════════════════════════════════
+function onFieldLabelChange(fieldId, val) {
+  const field = findField(fieldId);
+  if (field) {
+    field.label = val;
+    // Update collapsed card label
+    const cardLabel = document.querySelector(`#fc-wrap-${fieldId} .field-card-label`);
+    if (cardLabel) cardLabel.innerHTML = val ? escHtml(val) + (field.required ? ' <span class="field-req-star">*</span>' : '') : '<span style="color:var(--gray-400);font-style:italic">Nhập label...</span>';
+    updatePreview();
+  }
+}
+
+function onFieldTypeChange(fieldId, newType) {
+  const field = findField(fieldId);
+  if (!field) return;
+  // Clear type-specific config
+  const keepKeys = ['id', 'type', 'label', 'required'];
+  Object.keys(field).forEach(k => { if (!keepKeys.includes(k)) delete field[k]; });
+  field.type = newType;
+  // Re-render just the config section
+  const cfgEl = document.getElementById(`fe-config-${fieldId}`);
+  if (cfgEl) cfgEl.innerHTML = renderConfigFields(field);
+  // Update icon in card header
+  const ft = FIELD_TYPES.find(t => t.type === newType);
+  const iconEl = document.querySelector(`#fc-wrap-${fieldId} .field-type-icon`);
+  if (iconEl) iconEl.textContent = ft?.icon || '📌';
+  bindConfigListeners(fieldId);
+  updatePreview();
+}
+
+function onRequiredChange(fieldId, val) {
+  const field = findField(fieldId);
+  if (field) {
+    field.required = val;
+    const cardLabel = document.querySelector(`#fc-wrap-${fieldId} .field-card-label`);
+    if (cardLabel && field.label) {
+      cardLabel.innerHTML = escHtml(field.label) + (val ? ' <span class="field-req-star">*</span>' : '');
     }
-    case 'dropdown_static':
-      return `${(field.options||[]).length} options`;
-    case 'dropdown_storeslist':
-      return `source: ${field.source||'?'}${field.depends_on ? ` → depends_on: ${field.depends_on}` : ''}`;
-    case 'image': {
-      const v = field.validate || {};
-      const parts = [];
-      if (v.min_files) parts.push(`min: ${v.min_files}`);
-      if (v.max_files) parts.push(`max: ${v.max_files}`);
-      if (v.max_kb) parts.push(`≤${v.max_kb}KB`);
-      return parts.join(', ') || 'Upload ảnh';
-    }
-    case 'date': {
-      const v = field.validate || {};
-      const parts = [];
-      if (v.no_past) parts.push('Không quá khứ');
-      if (v.no_future) parts.push('Không tương lai');
-      if (v.min_date) parts.push(`từ ${v.min_date}`);
-      if (v.max_date) parts.push(`đến ${v.max_date}`);
-      return parts.join(' · ') || 'Chọn ngày';
-    }
+    updatePreview();
+  }
+}
+
+function findField(fieldId) {
+  for (const s of sections) {
+    const f = s.fields.find(f => f.id === fieldId);
+    if (f) return f;
+  }
+  return null;
+}
+
+function findSectionForField(fieldId) {
+  return sections.find(s => s.fields.some(f => f.id === fieldId));
+}
+
+// ═══════════════════════════════════════════════════
+// CONFIG FIELD RENDERERS
+// ═══════════════════════════════════════════════════
+function renderConfigFields(field) {
+  const e = field;
+  switch (e.type) {
     case 'text':
     case 'textarea':
-      return field.placeholder || (field.validate ? JSON.stringify(field.validate) : '');
+      return `
+<div class="fe-config-grid">
+  <div>
+    <label class="fe-label">Placeholder</label>
+    <input class="fe-input" id="cfg-placeholder-${e.id}" type="text" placeholder="Gợi ý nhập liệu..." value="${escHtml(e.placeholder||'')}">
+  </div>
+  <div><!-- spacer --></div>
+  <div>
+    <label class="fe-label">Min length</label>
+    <input class="fe-input" id="cfg-minlen-${e.id}" type="number" min="0" placeholder="0" value="${e.validate?.min_length ?? ''}">
+  </div>
+  <div>
+    <label class="fe-label">Max length</label>
+    <input class="fe-input" id="cfg-maxlen-${e.id}" type="number" min="0" placeholder="255" value="${e.validate?.max_length ?? ''}">
+  </div>
+</div>`;
+
+    case 'number':
+      return `
+<div class="fe-config-grid">
+  <div>
+    <label class="fe-label">Đơn vị</label>
+    <select class="fe-input" id="cfg-unit-${e.id}">
+      <option value="">-- chọn --</option>
+      ${['cm','m','kg','%','pcs','đ'].map(u => `<option value="${u}" ${(e.unit||'')==u?'selected':''}>${u}</option>`).join('')}
+      <option value="__custom__" ${e.unit && !['cm','m','kg','%','pcs','đ'].includes(e.unit) ? 'selected' : ''}>Khác...</option>
+    </select>
+  </div>
+  <div id="cfg-unit-custom-wrap-${e.id}" style="${e.unit && !['cm','m','kg','%','pcs','đ'].includes(e.unit) ? '' : 'display:none'}">
+    <label class="fe-label">Đơn vị tùy chỉnh</label>
+    <input class="fe-input" id="cfg-unit-custom-${e.id}" type="text" placeholder="vd: lần" value="${e.unit && !['cm','m','kg','%','pcs','đ'].includes(e.unit) ? escHtml(e.unit) : ''}">
+  </div>
+  <div>
+    <label class="fe-label">Min</label>
+    <input class="fe-input" id="cfg-nummin-${e.id}" type="number" placeholder="0" value="${e.validate?.min ?? ''}">
+  </div>
+  <div>
+    <label class="fe-label">Max</label>
+    <input class="fe-input" id="cfg-nummax-${e.id}" type="number" placeholder="9999" value="${e.validate?.max ?? ''}">
+  </div>
+  <div class="full">
+    <label class="fe-label">Cảnh báo trên ngưỡng (warn_above)</label>
+    <input class="fe-input" id="cfg-warnabove-${e.id}" type="number" placeholder="vd: 400" value="${e.validate?.warn_above ?? ''}">
+  </div>
+</div>`;
+
+    case 'dropdown_static':
+      return `
+<div class="fe-config-grid">
+  <div class="full">
+    <label class="fe-label">Danh sách options <small style="color:var(--gray-400);text-transform:none">(mỗi dòng 1 option)</small></label>
+    <textarea class="fe-input" id="cfg-options-${e.id}" rows="5" placeholder="Tùy chọn 1&#10;Tùy chọn 2&#10;Tùy chọn 3">${(e.options||[]).join('\n')}</textarea>
+  </div>
+</div>`;
+
+    case 'dropdown_storeslist':
+      return `
+<div class="fe-config-grid">
+  <div>
+    <label class="fe-label">Source type <span class="req">*</span></label>
+    <select class="fe-input" id="cfg-source-${e.id}">
+      <option value="">-- chọn --</option>
+      <option value="gdv" ${(e.source||'')==='gdv'?'selected':''}>GĐV</option>
+      <option value="qlkv" ${(e.source||'')==='qlkv'?'selected':''}>QLKV</option>
+      <option value="ch" ${(e.source||'')==='ch'?'selected':''}>CH (Cửa hàng)</option>
+    </select>
+  </div>
+  <div>
+    <label class="fe-label">Depends on (field ID)</label>
+    <input class="fe-input" id="cfg-dependson-${e.id}" type="text" placeholder="vd: gdv" value="${escHtml(e.depends_on||'')}">
+  </div>
+</div>`;
+
+    case 'image':
+      return `
+<div class="fe-config-grid">
+  <div>
+    <label class="fe-label">Min files</label>
+    <input class="fe-input" id="cfg-minfiles-${e.id}" type="number" min="0" placeholder="1" value="${e.validate?.min_files ?? ''}">
+  </div>
+  <div>
+    <label class="fe-label">Max files</label>
+    <input class="fe-input" id="cfg-maxfiles-${e.id}" type="number" min="1" placeholder="5" value="${e.validate?.max_files ?? ''}">
+  </div>
+  <div class="full">
+    <label class="fe-label">Max dung lượng/ảnh (KB)</label>
+    <input class="fe-input" id="cfg-maxkb-${e.id}" type="number" min="50" placeholder="200" value="${e.validate?.max_kb ?? ''}">
+  </div>
+</div>`;
+
+    case 'date':
+      return `
+<div class="fe-config-grid">
+  <div>
+    <label class="fe-label">Min date</label>
+    <input class="fe-input" id="cfg-mindate-${e.id}" type="date" value="${e.validate?.min_date||''}">
+  </div>
+  <div>
+    <label class="fe-label">Max date</label>
+    <input class="fe-input" id="cfg-maxdate-${e.id}" type="date" value="${e.validate?.max_date||''}">
+  </div>
+  <div class="full" style="display:flex;gap:20px;flex-wrap:wrap">
+    <div class="fe-check-row">
+      <input type="checkbox" id="cfg-nopast-${e.id}" ${e.validate?.no_past?'checked':''}>
+      <label for="cfg-nopast-${e.id}">Không chọn ngày quá khứ</label>
+    </div>
+    <div class="fe-check-row">
+      <input type="checkbox" id="cfg-nofuture-${e.id}" ${e.validate?.no_future?'checked':''}>
+      <label for="cfg-nofuture-${e.id}">Không chọn ngày tương lai</label>
+    </div>
+  </div>
+</div>`;
+
     case 'email':
-      return field.domain_whitelist?.length ? `@${field.domain_whitelist.join(', @')}` : 'Mọi domain';
+      return `
+<div class="fe-config-grid">
+  <div class="full">
+    <label class="fe-label">Domain whitelist <small style="color:var(--gray-400);text-transform:none">(phân cách bằng dấu phẩy, để trống = chấp nhận tất cả)</small></label>
+    <input class="fe-input" id="cfg-domainwl-${e.id}" type="text" placeholder="gmail.com, company.com" value="${escHtml((e.domain_whitelist||[]).join(', '))}">
+  </div>
+</div>`;
+
     case 'phone_vn':
-      return '09x / 08x / 03x / 07x';
+      return `<div class="fe-info-badge">✅ Tự động validate format Việt Nam: 09x / 08x / 03x / 07x (10 chữ số)</div>`;
+
     default:
       return '';
   }
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// BIND CONFIG LISTENERS (update state on input)
+// ═══════════════════════════════════════════════════
+function bindConfigListeners(fieldId) {
+  const field = findField(fieldId);
+  if (!field) return;
+
+  const listenInput = (id, fn) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', fn);
+  };
+  const listenChange = (id, fn) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', fn);
+  };
+
+  switch (field.type) {
+    case 'text':
+    case 'textarea':
+      listenInput(`cfg-placeholder-${fieldId}`, e => { field.placeholder = e.target.value || undefined; updatePreview(); });
+      listenInput(`cfg-minlen-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.min_length = e.target.value ? parseInt(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenInput(`cfg-maxlen-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.max_length = e.target.value ? parseInt(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      break;
+
+    case 'number':
+      listenChange(`cfg-unit-${fieldId}`, e => {
+        const val = e.target.value;
+        const wrap = document.getElementById(`cfg-unit-custom-wrap-${fieldId}`);
+        if (wrap) wrap.style.display = val === '__custom__' ? '' : 'none';
+        if (val !== '__custom__') { field.unit = val || undefined; updatePreview(); }
+      });
+      listenInput(`cfg-unit-custom-${fieldId}`, e => { field.unit = e.target.value || undefined; updatePreview(); });
+      listenInput(`cfg-nummin-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.min = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenInput(`cfg-nummax-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.max = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenInput(`cfg-warnabove-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.warn_above = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      break;
+
+    case 'dropdown_static':
+      listenInput(`cfg-options-${fieldId}`, e => {
+        field.options = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
+        updatePreview();
+      });
+      break;
+
+    case 'dropdown_storeslist':
+      listenChange(`cfg-source-${fieldId}`, e => { field.source = e.target.value || undefined; updatePreview(); });
+      listenInput(`cfg-dependson-${fieldId}`, e => { field.depends_on = e.target.value.trim() || undefined; updatePreview(); });
+      break;
+
+    case 'image':
+      listenInput(`cfg-minfiles-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.min_files = e.target.value ? parseInt(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenInput(`cfg-maxfiles-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.max_files = e.target.value ? parseInt(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenInput(`cfg-maxkb-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.max_kb = e.target.value ? parseInt(e.target.value) : undefined;
+        cleanValidate(field); updatePreview();
+      });
+      break;
+
+    case 'date':
+      listenInput(`cfg-mindate-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.min_date = e.target.value || undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenInput(`cfg-maxdate-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.max_date = e.target.value || undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenChange(`cfg-nopast-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.no_past = e.target.checked || undefined;
+        cleanValidate(field); updatePreview();
+      });
+      listenChange(`cfg-nofuture-${fieldId}`, e => {
+        if (!field.validate) field.validate = {};
+        field.validate.no_future = e.target.checked || undefined;
+        cleanValidate(field); updatePreview();
+      });
+      break;
+
+    case 'email':
+      listenInput(`cfg-domainwl-${fieldId}`, e => {
+        const domains = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+        field.domain_whitelist = domains.length ? domains : undefined;
+        updatePreview();
+      });
+      break;
+  }
+}
+
+function cleanValidate(field) {
+  if (!field.validate) return;
+  const hasValue = Object.values(field.validate).some(v => v !== undefined && v !== null);
+  if (!hasValue) delete field.validate;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function renderSections() {
+  const container = document.getElementById('sections-container');
+  if (!container) return;
+
+  if (sections.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:48px;color:var(--gray-400)">
+        <div style="font-size:3rem;margin-bottom:12px">📋</div>
+        <p style="font-size:0.92rem">Chưa có section nào. Nhấn <strong>Thêm Section</strong> hoặc nút 📑 ở phải màn hình để bắt đầu.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = sections.map((section, sIdx) => `
+    <div class="section-card ${activeSectionId === section.id ? 'active-section' : ''}" id="sec-${section.id}" onclick="setActiveSection('${section.id}')">
+      <div class="section-header" onclick="event.stopPropagation(); setActiveSection('${section.id}')">
+        <input
+          class="section-title-input"
+          type="text"
+          value="${escHtml(section.title)}"
+          placeholder="Tên section..."
+          oninput="updateSectionTitle('${section.id}', this.value)"
+          onclick="event.stopPropagation()"
+          title="Click để sửa tên section"
+        >
+        <span class="section-id-badge">${escHtml(section.id)}</span>
+        <button class="btn-section-del" title="Xóa section" onclick="event.stopPropagation(); deleteSection('${section.id}')">🗑️</button>
+      </div>
+      <div class="section-body">
+        ${section.fields.length === 0
+          ? `<div class="empty-fields">Chưa có field nào. Nhấn ➕ ở phải màn hình để thêm.</div>`
+          : section.fields.map((field, fIdx) => renderFieldCardWrap(section, field, fIdx)).join('')
+        }
+        <div style="margin-top:10px;padding-top:8px;border-top:1.5px dashed var(--gray-200)">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); addFieldToSection('${section.id}')">
+            ＋ Thêm field vào section này
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Bind all config listeners for expanded field
+  sections.forEach(section => {
+    section.fields.forEach(field => {
+      if (expandedFieldId === field.id) {
+        setTimeout(() => bindConfigListeners(field.id), 0);
+      }
+    });
+  });
+}
+
+function renderFieldCardWrap(section, field, fIdx) {
+  const ft = FIELD_TYPES.find(t => t.type === field.type);
+  const icon = ft?.icon || '📌';
+  const isExpanded = expandedFieldId === field.id;
+  const isFirst = fIdx === 0;
+  const isLast = fIdx === section.fields.length - 1;
+
+  return `
+<div class="field-card-wrap" id="fc-wrap-${field.id}">
+  <!-- Collapsed header -->
+  <div class="field-card ${isExpanded ? 'is-expanded' : ''}"
+    onclick="event.stopPropagation(); expandField('${field.id}')">
+    <span class="field-drag-handle" title="Kéo để sắp xếp">⠿</span>
+    <span class="field-type-icon">${icon}</span>
+    <span class="field-card-label">${field.label
+      ? escHtml(field.label) + (field.required ? ' <span class="field-req-star">*</span>' : '')
+      : '<span style="color:var(--gray-400);font-style:italic">Nhập label...</span>'
+    }</span>
+    <div class="field-card-menu" onclick="event.stopPropagation()">
+      <button title="Di chuyển lên" onclick="moveField('${section.id}','${field.id}',-1)" ${isFirst?'disabled':''}>↑</button>
+      <button title="Di chuyển xuống" onclick="moveField('${section.id}','${field.id}',1)" ${isLast?'disabled':''}>↓</button>
+      <button class="del-btn" title="Xóa field" onclick="deleteField('${section.id}','${field.id}')">✕</button>
+    </div>
+  </div>
+
+  <!-- Inline editor (expanded) -->
+  <div class="field-editor ${isExpanded ? 'open' : ''}" id="fe-${field.id}" onclick="event.stopPropagation()">
+    <!-- Label input -->
+    <input
+      class="fe-label-input"
+      id="fe-label-${field.id}"
+      type="text"
+      placeholder="Nhập câu hỏi / nhãn field..."
+      value="${escHtml(field.label || '')}"
+      oninput="onFieldLabelChange('${field.id}', this.value)"
+    >
+
+    <!-- Type selector + Required toggle -->
+    <div class="fe-type-row">
+      <select class="fe-type-select" onchange="onFieldTypeChange('${field.id}', this.value)">
+        <optgroup label="📝 Văn bản">
+          <option value="text" ${field.type==='text'?'selected':''}>📝 Text ngắn</option>
+          <option value="textarea" ${field.type==='textarea'?'selected':''}>📄 Đoạn văn</option>
+          <option value="phone_vn" ${field.type==='phone_vn'?'selected':''}>📱 Số điện thoại</option>
+          <option value="email" ${field.type==='email'?'selected':''}>✉️ Email</option>
+        </optgroup>
+        <optgroup label="🔢 Số & Đo">
+          <option value="number" ${field.type==='number'?'selected':''}>🔢 Số</option>
+        </optgroup>
+        <optgroup label="📋 Lựa chọn">
+          <option value="dropdown_static" ${field.type==='dropdown_static'?'selected':''}>📋 Trắc nghiệm</option>
+          <option value="dropdown_storeslist" ${field.type==='dropdown_storeslist'?'selected':''}>🏪 Danh sách CH</option>
+        </optgroup>
+        <optgroup label="✨ Đặc biệt">
+          <option value="image" ${field.type==='image'?'selected':''}>📷 Tải ảnh lên</option>
+          <option value="date" ${field.type==='date'?'selected':''}>📅 Ngày</option>
+        </optgroup>
+      </select>
+
+      <div class="fe-required-toggle">
+        <label class="toggle-switch" style="width:38px;height:20px">
+          <input type="checkbox" id="fe-req-${field.id}" ${field.required?'checked':''}
+            onchange="onRequiredChange('${field.id}', this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span>Bắt buộc</span>
+      </div>
+    </div>
+
+    <!-- Config area -->
+    <div class="fe-config" id="fe-config-${field.id}">
+      ${renderConfigFields(field)}
+    </div>
+
+    <!-- Footer actions -->
+    <div class="fe-actions">
+      <button class="fe-btn fe-btn-danger" onclick="deleteField('${section.id}','${field.id}')">🗑️ Xóa</button>
+      <button class="fe-btn fe-btn-move" onclick="moveField('${section.id}','${field.id}',-1)" ${isFirst?'disabled':''}>↑ Lên</button>
+      <button class="fe-btn fe-btn-move" onclick="moveField('${section.id}','${field.id}',1)" ${isLast?'disabled':''}>↓ Xuống</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ═══════════════════════════════════════════════════
 // JSON / PREVIEW
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function buildJSON() {
   const id = document.getElementById('meta-id').value.trim();
   const title = document.getElementById('meta-title').value.trim();
@@ -1288,20 +1385,24 @@ function buildJSON() {
   const validFrom = document.getElementById('meta-valid-from').value || null;
   const validTo = document.getElementById('meta-valid-to').value || null;
 
-  return {
+  // Clean undefined from field objects
+  const cleanSections = sections.map(s => ({
+    id: s.id,
+    title: s.title,
+    fields: s.fields.map(f => JSON.parse(JSON.stringify(f, (k,v) => v === undefined ? undefined : v)))
+  }));
+
+  const obj = {
     id: id || 'untitled',
     title: title || 'Untitled Form',
-    subtitle: subtitle || undefined,
-    webhook: webhook || undefined,
+    ...(subtitle ? { subtitle } : {}),
+    ...(webhook ? { webhook } : {}),
     active,
     valid_from: validFrom,
     valid_to: validTo,
-    sections: sections.map(s => ({
-      id: s.id,
-      title: s.title,
-      fields: s.fields
-    }))
+    sections: cleanSections
   };
+  return obj;
 }
 
 function syntaxHighlight(json) {
@@ -1309,13 +1410,9 @@ function syntaxHighlight(json) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
       let cls = 'num';
-      if (/^"/.test(match)) {
-        cls = /:$/.test(match) ? 'key' : 'str';
-      } else if (/true|false/.test(match)) {
-        cls = 'bool';
-      } else if (/null/.test(match)) {
-        cls = 'null';
-      }
+      if (/^"/.test(match)) cls = /:$/.test(match) ? 'key' : 'str';
+      else if (/true|false/.test(match)) cls = 'bool';
+      else if (/null/.test(match)) cls = 'null';
       return `<span class="${cls}">${match}</span>`;
     });
 }
@@ -1323,13 +1420,13 @@ function syntaxHighlight(json) {
 function updatePreview() {
   const title = document.getElementById('meta-title').value.trim();
   document.getElementById('form-title-display').textContent = title || 'Chưa có tên form';
-
   const active = document.getElementById('meta-active').checked;
   document.getElementById('active-label').textContent = active ? 'Bật' : 'Tắt';
-
-  const jsonStr = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
   const display = document.getElementById('json-display');
-  display.innerHTML = syntaxHighlight(jsonStr);
+  if (display) {
+    const jsonStr = JSON.stringify(buildJSON(), null, 2);
+    display.innerHTML = syntaxHighlight(jsonStr);
+  }
 }
 
 function switchTab(name, btn) {
@@ -1340,12 +1437,13 @@ function switchTab(name, btn) {
   if (name === 'preview') updatePreview();
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // EXPORT
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function copyJSON() {
-  const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
-  navigator.clipboard.writeText(json).then(() => showNotif('✅ Đã copy JSON!', 'success'))
+  const json = JSON.stringify(buildJSON(), null, 2);
+  navigator.clipboard.writeText(json)
+    .then(() => showNotif('✅ Đã copy JSON!', 'success'))
     .catch(() => {
       const ta = document.createElement('textarea');
       ta.value = json;
@@ -1358,7 +1456,7 @@ function copyJSON() {
 }
 
 function downloadJSON() {
-  const json = JSON.stringify(buildJSON(), (k,v) => v === undefined ? undefined : v, 2);
+  const json = JSON.stringify(buildJSON(), null, 2);
   const id = document.getElementById('meta-id').value.trim() || 'form';
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1366,12 +1464,12 @@ function downloadJSON() {
   a.href = url; a.download = `${id}-config.json`;
   a.click();
   URL.revokeObjectURL(url);
-  showNotif('⬇️ Đang tải config.json...', 'success');
+  showNotif('⬇️ Đang tải file...', 'success');
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // SAMPLE DATA
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function openLoadSample() {
   if (sections.length > 0 || document.getElementById('meta-id').value) {
     if (!confirm('Load mẫu sẽ XÓA dữ liệu hiện tại. Tiếp tục?')) return;
@@ -1390,14 +1488,15 @@ function loadSample() {
 
   sections = [];
   sectionCounter = 0;
+  expandedFieldId = null;
 
   addSection({
     id: 's1',
     title: 'Thông tin cửa hàng',
     fields: [
-      { id: 'gdv', type: 'dropdown_storeslist', label: 'Giám đốc Vùng (GĐV)', source: 'gdv', required: true },
-      { id: 'qlkv', type: 'dropdown_storeslist', label: 'QLKV phụ trách', source: 'qlkv', depends_on: 'gdv', required: true },
-      { id: 'ch', type: 'dropdown_storeslist', label: 'Cửa hàng', source: 'ch', depends_on: 'qlkv', required: true },
+      { id: 'gdv',  type: 'dropdown_storeslist', label: 'Giám đốc Vùng (GĐV)', source: 'gdv',  required: true },
+      { id: 'qlkv', type: 'dropdown_storeslist', label: 'QLKV phụ trách',       source: 'qlkv', depends_on: 'gdv',  required: true },
+      { id: 'ch',   type: 'dropdown_storeslist', label: 'Cửa hàng',             source: 'ch',   depends_on: 'qlkv', required: true },
     ]
   });
 
@@ -1405,9 +1504,9 @@ function loadSample() {
     id: 's2',
     title: 'Kích thước mặt tiền',
     fields: [
-      { id: 'kv1', type: 'number', label: 'Mặt kính KV CHT', unit: 'cm', required: true, validate: { min: 1, max: 9999, warn_above: 400 } },
-      { id: 'kv2', type: 'number', label: 'Cửa kính ra vào', unit: 'cm', required: true, validate: { min: 1, max: 9999, warn_above: 400 } },
-      { id: 'kv3', type: 'number', label: 'Mặt kính còn lại 01', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv1', type: 'number', label: 'Mặt kính KV CHT',              unit: 'cm', required: true,  validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv2', type: 'number', label: 'Cửa kính ra vào',              unit: 'cm', required: true,  validate: { min: 1, max: 9999, warn_above: 400 } },
+      { id: 'kv3', type: 'number', label: 'Mặt kính còn lại 01',          unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
       { id: 'kv4', type: 'number', label: 'Mặt kính còn lại 02 (Lô góc)', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
       { id: 'kv5', type: 'number', label: 'Mặt kính còn lại 03 (Lô góc)', unit: 'cm', required: false, validate: { min: 1, max: 9999, warn_above: 400 } },
     ]
@@ -1430,21 +1529,21 @@ function clearAll() {
   if (!confirm('Xóa tất cả dữ liệu?')) return;
   sections = [];
   sectionCounter = 0;
-  document.getElementById('meta-id').value = '';
-  document.getElementById('meta-title').value = '';
-  document.getElementById('meta-subtitle').value = '';
-  document.getElementById('meta-webhook').value = '';
-  document.getElementById('meta-valid-from').value = '';
-  document.getElementById('meta-valid-to').value = '';
+  expandedFieldId = null;
+  activeSectionId = null;
+  ['meta-id','meta-title','meta-subtitle','meta-webhook','meta-valid-from','meta-valid-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   document.getElementById('meta-active').checked = true;
   renderSections();
   updatePreview();
-  showNotif('🗑️ Đã xóa tất cả', 'success');
+  showNotif('🗑️ Đã xóa tất cả', '');
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // UTILS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function escHtml(str) {
   return String(str)
     .replace(/&/g,'&amp;')
@@ -1462,24 +1561,32 @@ function showNotif(msg, type='') {
   el._t = setTimeout(() => { el.style.display = 'none'; }, 2800);
 }
 
-// ═══════════════════════════════════════════
-// KEYBOARD
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// KEYBOARD & CLICK OUTSIDE
+// ═══════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    const modal = document.getElementById('modal-add-field');
-    if (!modal.classList.contains('hidden')) confirmAddField();
+  if (e.key === 'Escape' && expandedFieldId) {
+    expandedFieldId = null;
+    renderSections();
   }
 });
 
-document.getElementById('modal-add-field').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-add-field')) closeModal();
+// Click outside field cards → collapse
+document.addEventListener('click', e => {
+  if (!expandedFieldId) return;
+  // If click is inside a field-card-wrap, do nothing
+  if (e.target.closest('.field-card-wrap')) return;
+  // If click is inside FAB bar, do nothing
+  if (e.target.closest('.fab-bar')) return;
+  // If click is inside sidebar, do nothing
+  if (e.target.closest('.sidebar')) return;
+  expandedFieldId = null;
+  renderSections();
 });
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 renderSections();
 updatePreview();
 </script>
