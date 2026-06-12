@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v3.2 — RuralForms Admin</title>
+<title>Form Builder v3.3 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1162,7 +1162,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v3.2</span>
+    <span class="badge">Form Builder v3.3</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1288,6 +1288,23 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
           style="width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.88rem;font-family:var(--font);outline:none">
         <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
           Google Apps Script nhận data → lưu vào Google Sheets (mỗi form 1 tab riêng theo Form ID)
+        </div>
+      </div>
+
+      <!-- Sheet ID -->
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:5px">
+          📊 Google Sheet ID <small style="color:var(--gray-400);font-weight:400">(để xem data submissions)</small>
+        </label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" id="cfg-sheet-id" placeholder="1fPH-x33pzVs-lstj-HB6..."
+            style="flex:1;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:0.88rem;font-family:var(--font);outline:none">
+          <button onclick="openSheet()" style="padding:8px 12px;background:var(--success);color:white;border:none;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font)">
+            📊 Xem data
+          </button>
+        </div>
+        <div style="font-size:0.78rem;color:var(--gray-400);margin-top:4px">
+          Lấy Sheet ID từ URL: docs.google.com/spreadsheets/d/<b>ID_ở_đây</b>/edit
         </div>
       </div>
 
@@ -2188,10 +2205,11 @@ function setMode(mode, btn) {
 // ─── SETTINGS ───────────────────────────────────────
 function openSettings() {
   const s = loadSettings();
-  document.getElementById('cfg-webhook').value  = s.webhook || '';
-  document.getElementById('cfg-gh-token').value = s.token   || '';
-  document.getElementById('cfg-gh-repo').value  = s.repo    || 'Ruralwcm/thongkedulieu';
-  document.getElementById('cfg-gh-path').value  = s.path    || 'forms';
+  document.getElementById('cfg-webhook').value   = s.webhook  || '';
+  document.getElementById('cfg-sheet-id').value  = s.sheetId  || '';
+  document.getElementById('cfg-gh-token').value  = s.token    || '';
+  document.getElementById('cfg-gh-repo').value   = s.repo     || 'Ruralwcm/thongkedulieu';
+  document.getElementById('cfg-gh-path').value   = s.path     || 'forms';
   document.getElementById('modal-settings').classList.remove('hidden');
 }
 function closeSettings() {
@@ -2199,13 +2217,25 @@ function closeSettings() {
 }
 function saveSettings() {
   const webhook = document.getElementById('cfg-webhook').value.trim();
+  const sheetId = document.getElementById('cfg-sheet-id').value.trim();
   const token   = document.getElementById('cfg-gh-token').value.trim();
   const repo    = document.getElementById('cfg-gh-repo').value.trim();
   const path    = document.getElementById('cfg-gh-path').value.trim() || 'forms';
   if (!token || !repo) { showNotif('Cần nhập GitHub Token và Repo!', 'error'); return; }
-  localStorage.setItem('rf_gh_settings', JSON.stringify({ webhook, token, repo, path }));
+  localStorage.setItem('rf_gh_settings', JSON.stringify({ webhook, sheetId, token, repo, path }));
   closeSettings();
   showNotif('✅ Đã lưu settings!', 'success');
+}
+
+function openSheet() {
+  const s = loadSettings();
+  const sheetId = document.getElementById('cfg-sheet-id')?.value.trim() || s.sheetId;
+  if (!sheetId) { showNotif('Nhập Sheet ID trước!', 'error'); return; }
+  const formId = document.getElementById('meta-id')?.value.trim();
+  // Nếu có form ID → mở thẳng tab tương ứng (gid lookup không khả thi từ browser)
+  // → mở sheet chính, user tự chọn tab
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+  window.open(url, '_blank');
 }
 function loadSettings() {
   try { return JSON.parse(localStorage.getItem('rf_gh_settings') || '{}'); } catch { return {}; }
