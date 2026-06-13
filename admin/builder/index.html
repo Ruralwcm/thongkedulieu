@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v5.2 — RuralForms Admin</title>
+<title>Form Builder v5.3 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1203,7 +1203,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v5.2</span>
+    <span class="badge">Form Builder v5.3</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -2681,17 +2681,31 @@ function updateSfCount() {
   if (el) el.textContent = _sfSelected.size ? `${_sfSelected.size} được chọn` : 'Tất cả (không giới hạn)';
 }
 
-function confirmStoresFilter() {
+async function confirmStoresFilter() {
   const field = findField(_sfFieldId);
   if (!field) return;
   const key = `filter_${_sfLevel}`;
   field[key] = _sfSelected.size ? [..._sfSelected].sort() : undefined;
-  closeStoresFilter();
+
   // Re-render field body
   const bodyEl = document.getElementById(`fb-${_sfFieldId}`);
   if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(_sfFieldId); }
   updatePreview();
-  showNotif(`✅ Đã chọn ${_sfSelected.size || 'tất cả'} ${_sfLevel.toUpperCase()}`, 'success');
+
+  // Auto-cascade: GĐV → QLKV → CH
+  const nextLevel = _sfLevel === 'gdv' ? 'qlkv' : _sfLevel === 'qlkv' ? 'ch' : null;
+  const fieldId = _sfFieldId;
+
+  // Close current modal briefly then open next
+  document.getElementById('modal-stores-filter').classList.add('hidden');
+  if (_cropper) { _cropper.destroy(); _cropper = null; }
+
+  if (nextLevel) {
+    // Small delay for smooth UX
+    setTimeout(() => openStoresFilter(fieldId, nextLevel), 200);
+  } else {
+    showNotif(`✅ Đã hoàn tất cấu hình Stores List!`, 'success');
+  }
 }
 
 function clearStoresFilter(fieldId, level) {
