@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v4.9 — RuralForms Admin</title>
+<title>Form Builder v5.0 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1203,7 +1203,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v4.9</span>
+    <span class="badge">Form Builder v5.0</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1783,7 +1783,7 @@ ${!noValOps.includes(vOp) ? `<input type="text" class="v-val" id="vval-${id}" pl
 
       return `
 <div class="field-preview-area">${previewEl}</div>
-<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--gray-100)">
+<div id="vrow-${id}" style="display:${vCat ? '' : 'none'};margin-top:10px;padding-top:8px;border-top:1px solid var(--gray-100)">
   <!-- Row 1: validate type + op + value -->
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto">
     <select class="v-cat-sel" id="vt-${id}" style="width:90px;flex-shrink:0">
@@ -2026,7 +2026,13 @@ function bindBodyListeners(fieldId) {
         if (!cat) { delete field.validate; }
         else { field.validate = { category: cat, op: '', value: '', value2: '', error_msg: '' }; }
         const bodyEl = document.getElementById(`fb-${fieldId}`);
-        if (bodyEl) { bodyEl.innerHTML = renderFieldBody(field); bindBodyListeners(fieldId); }
+        if (bodyEl) {
+          bodyEl.innerHTML = renderFieldBody(field);
+          bindBodyListeners(fieldId);
+          // Keep vrow visible after re-render
+          const vRow = document.getElementById(`vrow-${fieldId}`);
+          if (vRow) vRow.style.display = '';
+        }
         updatePreview();
       });
       // Op selector
@@ -2209,7 +2215,6 @@ function renderFieldCard(section, field, fIdx) {
         value="${escHtml(field.label || '')}"
         oninput="onQuestionInput('${field.id}', this.value)"
       >
-      <button class="btn-add-image" title="Thêm ảnh minh họa" onclick="triggerFieldImageUpload('${field.id}')">🖼</button>
       <input type="file" id="fi-img-${field.id}" accept="image/*" style="display:none" onchange="onFieldImageChange('${field.id}', this)">
       <select class="type-selector" onchange="onTypeChange('${field.id}', this.value)">
         <optgroup label="Văn bản">
@@ -2262,7 +2267,18 @@ function renderFieldCard(section, field, fIdx) {
             <span class="slider"></span>
           </label>
         </label>
-        <button class="btn-more" title="More" style="color:var(--gray-400)">⋮</button>
+        <div style="position:relative;display:inline-block">
+          <button class="btn-more" title="More" style="color:var(--gray-400)"
+            onclick="event.stopPropagation();toggleMoreMenu('${field.id}')">⋮</button>
+          <div id="more-menu-${field.id}" style="display:none;position:absolute;right:0;bottom:36px;background:white;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:160px;z-index:100;overflow:hidden">
+            <button onclick="event.stopPropagation();toggleValidate('${field.id}')" style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:0.88rem;font-family:var(--font);color:var(--gray-700);cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
+              <span>☑️</span> Validate
+            </button>
+            <button onclick="event.stopPropagation();triggerFieldImageUpload('${field.id}')" style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:0.88rem;font-family:var(--font);color:var(--gray-700);cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
+              <span>🖼</span> Diễn giải Field
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -3119,6 +3135,30 @@ function clearAll() {
 // ═══════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════
+function toggleMoreMenu(fieldId) {
+  const menu = document.getElementById(`more-menu-${fieldId}`);
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  // Close all other menus first
+  document.querySelectorAll('[id^="more-menu-"]').forEach(m => m.style.display = 'none');
+  menu.style.display = isOpen ? 'none' : 'block';
+}
+
+function toggleValidate(fieldId) {
+  // Close more menu
+  document.getElementById(`more-menu-${fieldId}`)?.style && (document.getElementById(`more-menu-${fieldId}`).style.display = 'none');
+  // Toggle validate section visibility
+  const vRow = document.getElementById(`vrow-${fieldId}`);
+  if (vRow) {
+    vRow.style.display = vRow.style.display === 'none' ? '' : 'none';
+  }
+}
+
+// Close more menu when clicking outside
+document.addEventListener('click', () => {
+  document.querySelectorAll('[id^="more-menu-"]').forEach(m => m.style.display = 'none');
+});
+
 function clearValidateErr(fieldId) {
   const inp = document.getElementById(`verr-${fieldId}`);
   if (inp) inp.value = '';
