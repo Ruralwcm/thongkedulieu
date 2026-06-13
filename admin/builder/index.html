@@ -2941,9 +2941,46 @@ async function publishForm() {
     return;
   }
 
-  const s3 = addStep('⏳', 'GitHub Pages đang deploy (~1 phút)...');
+  // Step 3: Tạo f/{slug}/index.html nếu chưa có
+  const repoOwner = s.repo.split('/')[0];
+  const repoName  = s.repo.split('/')[1];
+  const htmlPath = `f/${formId}/index.html`;
+  const htmlApiUrl = `https://api.github.com/repos/${s.repo}/contents/${htmlPath}`;
+  const s3 = addStep('⏳', `Tạo f/${formId}/index.html...`);
+  try {
+    // Check xem file đã tồn tại chưa
+    const checkRes = await fetch(htmlApiUrl, { headers: { Authorization: `token ${s.token}` } });
+    if (checkRes.ok) {
+      s3.innerHTML = `<span class="step-icon">✅</span><span>f/${formId}/index.html đã tồn tại — giữ nguyên</span>`;
+    } else {
+      // Lấy template từ f/mat-tien/index.html (form gốc)
+      const templateUrl = `https://api.github.com/repos/${s.repo}/contents/f/mat-tien/index.html`;
+      const tplRes = await fetch(templateUrl, { headers: { Authorization: `token ${s.token}` } });
+      if (!tplRes.ok) throw new Error('Không lấy được template mat-tien');
+      const tplData = await tplRes.json();
+      // Decode, thay webhook, encode lại
+      const tplContent = decodeURIComponent(escape(atob(tplData.content.replace(/\n/g,''))));
+      const cfg = buildJSON(true);
+      const newWebhook = cfg.webhook || '';
+      const oldWebhook = tplContent.match(/WEBHOOK_URL='([^']+)'/)?.[1] || '';
+      const newContent = oldWebhook ? tplContent.replace(oldWebhook, newWebhook) : tplContent;
+      const encoded = btoa(unescape(encodeURIComponent(newContent)));
+      const putRes = await fetch(htmlApiUrl, {
+        method: 'PUT',
+        headers: { Authorization: `token ${s.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `form: create f/${formId}/index.html via RuralForms Builder`, content: encoded })
+      });
+      const putData = await putRes.json();
+      if (!putRes.ok) throw new Error(putData.message || 'Lỗi tạo HTML');
+      s3.innerHTML = `<span class="step-icon">✅</span><span>Đã tạo f/${formId}/index.html!</span>`;
+    }
+  } catch(e) {
+    s3.innerHTML = `<span class="step-icon">⚠️</span><span>Bỏ qua HTML: ${e.message}</span>`;
+  }
+
+  const s4 = addStep('⏳', 'GitHub Pages đang deploy (~1 phút)...');
   setTimeout(() => {
-    s3.innerHTML = `<span class="step-icon">✅</span><span>Deploy xong!</span>`;
+    s4.innerHTML = `<span class="step-icon">✅</span><span>Deploy xong!</span>`;
   }, 3000);
 
   const repoOwner = s.repo.split('/')[0];
