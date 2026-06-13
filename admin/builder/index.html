@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v5.0 — RuralForms Admin</title>
+<title>Form Builder v5.1 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1203,7 +1203,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v5.0</span>
+    <span class="badge">Form Builder v5.1</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -2215,6 +2215,7 @@ function renderFieldCard(section, field, fIdx) {
         value="${escHtml(field.label || '')}"
         oninput="onQuestionInput('${field.id}', this.value)"
       >
+      <button class="btn-add-image" title="Thêm ảnh minh họa" onclick="triggerFieldImageUpload('${field.id}')">🖼</button>
       <input type="file" id="fi-img-${field.id}" accept="image/*" style="display:none" onchange="onFieldImageChange('${field.id}', this)">
       <select class="type-selector" onchange="onTypeChange('${field.id}', this.value)">
         <optgroup label="Văn bản">
@@ -2247,6 +2248,15 @@ function renderFieldCard(section, field, fIdx) {
         style="position:absolute;top:4px;right:24px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:4px;padding:3px 8px;font-size:0.78rem;cursor:pointer">✕ Xóa ảnh</button>
     </div>` : ''}
 
+    <!-- Description row (ẩn mặc định) -->
+    <div id="fdesc-${field.id}" style="display:${field.description?'':'none'};padding:0 20px 8px">
+      <input type="text" id="fdesc-input-${field.id}"
+        placeholder="Mô tả thêm cho câu hỏi này..."
+        value="${escHtml(field.description||'')}"
+        oninput="onFieldDescInput('${field.id}',this.value)"
+        style="width:100%;border:none;border-bottom:1px solid var(--gray-300);padding:4px 2px;font-size:0.85rem;font-family:var(--font);color:var(--gray-600);outline:none;background:transparent;box-sizing:border-box">
+    </div>
+
     <!-- Row 2: Field body -->
     <div class="field-body" id="fb-${field.id}">
       ${renderFieldBody(field)}
@@ -2274,8 +2284,8 @@ function renderFieldCard(section, field, fIdx) {
             <button onclick="event.stopPropagation();toggleValidate('${field.id}')" style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:0.88rem;font-family:var(--font);color:var(--gray-700);cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
               <span>☑️</span> Validate
             </button>
-            <button onclick="event.stopPropagation();triggerFieldImageUpload('${field.id}')" style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:0.88rem;font-family:var(--font);color:var(--gray-700);cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
-              <span>🖼</span> Diễn giải Field
+            <button onclick="event.stopPropagation();toggleDescription('${field.id}')" style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:0.88rem;font-family:var(--font);color:var(--gray-700);cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
+              <span>📝</span> Mô tả Field
             </button>
           </div>
         </div>
@@ -3135,6 +3145,22 @@ function clearAll() {
 // ═══════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════
+function toggleDescription(fieldId) {
+  document.getElementById(`more-menu-${fieldId}`)?.style && (document.getElementById(`more-menu-${fieldId}`).style.display = 'none');
+  const row = document.getElementById(`fdesc-${fieldId}`);
+  if (!row) return;
+  const isHidden = row.style.display === 'none';
+  row.style.display = isHidden ? '' : 'none';
+  if (isHidden) setTimeout(() => document.getElementById(`fdesc-input-${fieldId}`)?.focus(), 50);
+}
+
+function onFieldDescInput(fieldId, val) {
+  const field = findField(fieldId);
+  if (!field) return;
+  field.description = val || undefined;
+  updatePreview();
+}
+
 function toggleMoreMenu(fieldId) {
   const menu = document.getElementById(`more-menu-${fieldId}`);
   if (!menu) return;
