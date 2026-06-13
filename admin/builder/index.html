@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v5.3 — RuralForms Admin</title>
+<title>Form Builder v5.4 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -422,6 +422,8 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 }
 .question-input:focus { border-bottom: 2px solid var(--primary); }
 .question-input::placeholder { color: var(--gray-400); }
+.question-input.error { border-bottom: 2px solid var(--danger); }
+.question-input.error::placeholder { color: #fca5a5; }
 
 /* Add image button */
 .btn-add-image {
@@ -1203,7 +1205,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v5.3</span>
+    <span class="badge">Form Builder v5.4</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -2211,9 +2213,9 @@ function renderFieldCard(section, field, fIdx) {
       <input
         class="question-input"
         id="qi-${field.id}"
-        placeholder="Câu hỏi"
+        placeholder="Tiêu đề câu hỏi (bắt buộc)"
         value="${escHtml(field.label || '')}"
-        oninput="onQuestionInput('${field.id}', this.value)"
+        oninput="onQuestionInput('${field.id}', this.value); this.classList.remove('error')"
       >
       <button class="btn-add-image" title="Thêm ảnh minh họa" onclick="triggerFieldImageUpload('${field.id}')">🖼</button>
       <input type="file" id="fi-img-${field.id}" accept="image/*" style="display:none" onchange="onFieldImageChange('${field.id}', this)">
@@ -2849,9 +2851,38 @@ function loadSettings() {
 }
 
 // ─── PUBLISH ─────────────────────────────────────────
+function validateBeforePublish() {
+  const errors = [];
+  // Check form title
+  if (!document.getElementById('meta-title').value.trim()) {
+    errors.push('Tên form không được để trống');
+    document.getElementById('meta-title').style.borderColor = 'var(--danger)';
+  }
+  // Check section titles + field labels
+  sections.forEach((s, si) => {
+    if (!s.title.trim()) errors.push(`Section ${si+1}: tiêu đề không được để trống`);
+    s.fields.forEach((f, fi) => {
+      if (!f.label?.trim()) {
+        errors.push(`Section ${si+1} · Field ${fi+1}: tiêu đề không được để trống`);
+        // Highlight field input if expanded
+        const inp = document.getElementById(`qi-${f.id}`);
+        if (inp) inp.classList.add('error');
+      }
+    });
+  });
+  return errors;
+}
+
 async function publishForm() {
   const formId = document.getElementById('meta-id').value.trim();
   if (!formId) { showNotif('Nhập Form ID trước!', 'error'); return; }
+
+  // Validate required fields
+  const errors = validateBeforePublish();
+  if (errors.length) {
+    showNotif(`❌ ${errors[0]}`, 'error');
+    return;
+  }
 
   const s = loadSettings();
   if (!s.token || !s.repo) {
