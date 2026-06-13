@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v4.4 — RuralForms Admin</title>
+<title>Form Builder v4.5 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1200,7 +1200,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v4.4</span>
+    <span class="badge">Form Builder v4.5</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1787,11 +1787,6 @@ ${!noValOps.includes(vOp) ? `<input type="text" class="v-val" id="vval-${id}" pl
     <option value="text" ${vCat==='text'?'selected':''}>Text</option>
     <option value="length" ${vCat==='length'?'selected':''}>Length</option>
     <option value="regex" ${vCat==='regex'?'selected':''}>Regular expression</option>
-    <optgroup label="Rural">
-      <option value="phone_vn" ${vCat==='phone_vn'?'selected':''}>Phone VN</option>
-      <option value="ma_code" ${vCat==='ma_code'?'selected':''}>Mã code</option>
-      <option value="ho_ten" ${vCat==='ho_ten'?'selected':''}>Họ tên VN</option>
-    </optgroup>
   </select>
   ${vCat ? `
   <div id="vsc-${id}" class="v-sub-row">${subCfg}</div>
