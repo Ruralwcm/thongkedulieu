@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v4.5 — RuralForms Admin</title>
+<title>Form Builder v4.6 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -567,15 +567,16 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
-/* Validate row — Google Forms style inline */
+/* Validate row — compact single line */
 .validate-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 10px;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--gray-100);
+  overflow-x: auto;
 }
 .v-cat-sel {
   min-width: 160px;
@@ -662,25 +663,27 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 .validate-sub-config input:focus { border-color: var(--primary-mid); }
 /* Validate op/val inputs */
 .v-op-sel {
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: 1px solid var(--gray-200);
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-family: var(--font);
   color: var(--gray-800);
   outline: none;
-  min-width: 160px;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 .v-op-sel:focus { border-color: var(--primary-mid); }
 .v-val {
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: 1px solid var(--gray-200);
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-family: var(--font);
   color: var(--gray-800);
   outline: none;
-  min-width: 100px;
+  width: 80px;
+  flex-shrink: 0;
 }
 .v-val:focus { border-color: var(--primary-mid); }
 .v-err:focus { border-color: var(--primary-mid); }
@@ -1200,7 +1203,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v4.5</span>
+    <span class="badge">Form Builder v4.6</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1781,20 +1784,17 @@ ${!noValOps.includes(vOp) ? `<input type="text" class="v-val" id="vval-${id}" pl
       return `
 <div class="field-preview-area">${previewEl}</div>
 <div class="validate-row">
-  <select class="validate-type-select v-cat-sel" id="vt-${id}">
-    <option value="" ${vCat===''?'selected':''}>Response validation</option>
+  <select class="v-cat-sel" id="vt-${id}" style="min-width:120px">
+    <option value="" ${vCat===''?'selected':''}>Validate</option>
     <option value="number" ${vCat==='number'?'selected':''}>Number</option>
     <option value="text" ${vCat==='text'?'selected':''}>Text</option>
     <option value="length" ${vCat==='length'?'selected':''}>Length</option>
-    <option value="regex" ${vCat==='regex'?'selected':''}>Regular expression</option>
+    <option value="regex" ${vCat==='regex'?'selected':''}>Regex</option>
   </select>
-  ${vCat ? `
-  <div id="vsc-${id}" class="v-sub-row">${subCfg}</div>
-  <div class="v-err-wrap">
-    <input type="text" id="verr-${id}" class="v-err-input"
-      placeholder="Custom error text"
-      value="${escHtml(vErr)}">
-    <button class="v-err-clear" onclick="clearValidateErr('${id}')" title="Clear error message">×</button>
+  ${vCat ? `<div id="vsc-${id}" class="v-sub-row">${subCfg}</div>
+  <div class="v-err-wrap" style="min-width:140px;flex:1">
+    <input type="text" id="verr-${id}" class="v-err-input" placeholder="Custom error text" value="${escHtml(vErr)}">
+    <button class="v-err-clear" onclick="clearValidateErr('${id}')">×</button>
   </div>` : `<div id="vsc-${id}"></div>`}
 </div>`;
     }
