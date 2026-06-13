@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v4.3 — RuralForms Admin</title>
+<title>Form Builder v4.4 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -1200,7 +1200,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v4.3</span>
+    <span class="badge">Form Builder v4.4</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1326,7 +1326,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
       <h3 id="crop-title">✂️ Crop ảnh</h3>
       <button class="modal-close" onclick="closeCropModal()">✕</button>
     </div>
-    <div class="modal-body" style="padding:12px">
+    <div class="modal-body" style="padding:12px;overflow-y:auto;flex:1">
       <!-- Crop controls -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
         <button onclick="_cropper?.rotate(-90)" class="crop-btn" title="Xoay trái">↺ -90°</button>
@@ -1362,7 +1362,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 
 <!-- Stores Filter Popup -->
 <div id="modal-stores-filter" class="modal-overlay hidden">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:480px;max-height:85vh;display:flex;flex-direction:column">
     <div class="modal-header">
       <h3 id="sf-title">Chọn GĐV</h3>
       <button class="modal-close" onclick="closeStoresFilter()">✕</button>
@@ -1374,7 +1374,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
         <button onclick="sfSelectAll()" style="padding:6px 12px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:var(--font)">Chọn tất cả</button>
         <button onclick="sfClearAll()" style="padding:6px 12px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:var(--font)">Bỏ chọn</button>
       </div>
-      <div id="sf-list" style="max-height:360px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px">
+      <div id="sf-list" style="max-height:240px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px">
         <div style="padding:20px;text-align:center;color:var(--gray-400)">⏳ Đang tải...</div>
       </div>
       <div id="sf-count" style="margin-top:8px;font-size:0.82rem;color:var(--gray-500);text-align:right"></div>
