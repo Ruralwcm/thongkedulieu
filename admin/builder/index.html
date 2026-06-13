@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Builder v4.7 — RuralForms Admin</title>
+<title>Form Builder v4.8 — RuralForms Admin</title>
 <link rel="stylesheet" href="../../assets/style.css">
 <style>
 /* ── CSS Variables (standalone fallback) ── */
@@ -663,15 +663,15 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 .validate-sub-config input:focus { border-color: var(--primary-mid); }
 /* Validate op/val inputs */
 .v-op-sel {
-  padding: 5px 8px;
+  padding: 5px 6px;
   border: 1px solid var(--gray-200);
   border-radius: 4px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-family: var(--font);
   color: var(--gray-800);
   outline: none;
-  min-width: 140px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
 }
 .v-op-sel:focus { border-color: var(--primary-mid); }
 .v-val {
@@ -682,8 +682,8 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
   font-family: var(--font);
   color: var(--gray-800);
   outline: none;
-  width: 80px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 60px;
 }
 .v-val:focus { border-color: var(--primary-mid); }
 .v-err:focus { border-color: var(--primary-mid); }
@@ -1203,7 +1203,7 @@ body { margin: 0; font-family: var(--font); background: var(--gray-50); color: v
 <header class="admin-header">
   <div class="logo">
     <span>🌿 RuralForms</span>
-    <span class="badge">Form Builder v4.7</span>
+    <span class="badge">Form Builder v4.8</span>
   </div>
   <nav>
     <a class="nav-link" href="../index.html">📊 Dashboard</a>
@@ -1786,7 +1786,7 @@ ${!noValOps.includes(vOp) ? `<input type="text" class="v-val" id="vval-${id}" pl
 <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--gray-100)">
   <!-- Row 1: validate type + op + value -->
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto">
-    <select class="v-cat-sel" id="vt-${id}" style="min-width:110px;flex-shrink:0">
+    <select class="v-cat-sel" id="vt-${id}" style="width:90px;flex-shrink:0">
       <option value="" ${vCat===''?'selected':''}>Validate</option>
       <option value="number" ${vCat==='number'?'selected':''}>Number</option>
       <option value="text"   ${vCat==='text'  ?'selected':''}>Text</option>
