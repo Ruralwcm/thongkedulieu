@@ -3314,6 +3314,30 @@ document.addEventListener('click', e => {
 // ═══════════════════════════════════════════════════
 renderSections();
 updatePreview();
+
+// Auto-load form khi có ?edit=slug trong URL
+(async function autoLoadFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const editSlug = params.get('edit');
+  if (!editSlug) return;
+  const s = loadSettings();
+  if (!s.token || !s.repo) {
+    showNotif('Cần lưu GitHub token trong Settings trước!', 'error');
+    return;
+  }
+  showNotif(`⏳ Đang load form "${editSlug}"...`, '');
+  try {
+    const apiUrl = `https://api.github.com/repos/${s.repo}/contents/forms/${editSlug}/config.json`;
+    const res = await fetch(apiUrl, { headers: { Authorization: `token ${s.token}` } });
+    if (!res.ok) throw new Error(`Không tìm thấy forms/${editSlug}/config.json`);
+    const data = await res.json();
+    const json = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+    loadFormData(json);
+    showNotif(`✅ Đã load form "${editSlug}"!`, 'success');
+  } catch(e) {
+    showNotif(`❌ Load thất bại: ${e.message}`, 'error');
+  }
+})();
 </script>
 </body>
 </html>
