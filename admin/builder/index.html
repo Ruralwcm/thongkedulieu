@@ -2942,8 +2942,6 @@ async function publishForm() {
   }
 
   // Step 3: Tạo f/{slug}/index.html nếu chưa có
-  const repoOwner = s.repo.split('/')[0];
-  const repoName  = s.repo.split('/')[1];
   const htmlPath = `f/${formId}/index.html`;
   const htmlApiUrl = `https://api.github.com/repos/${s.repo}/contents/${htmlPath}`;
   const s3 = addStep('⏳', `Tạo f/${formId}/index.html...`);
